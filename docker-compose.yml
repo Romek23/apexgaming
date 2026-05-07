@@ -1,0 +1,71 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: apexgaming-db
+    environment:
+      POSTGRES_USER: apexgaming
+      POSTGRES_PASSWORD: apexgaming_password
+      POSTGRES_DB: apexgaming
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - apexgaming-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apexgaming"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: apexgaming-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@apexgaming.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - apexgaming-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: apexgaming-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://apexgaming:apexgaming_password@postgres:5432/apexgaming
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apexgaming-network
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: apexgaming-frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - apexgaming-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+
+networks:
+  apexgaming-network:
+    driver: bridge
