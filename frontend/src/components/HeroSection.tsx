@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 const heroImages = [
   new URL("../assets/images/banners/hero-photo-1.png", import.meta.url).href,
   new URL("../assets/images/banners/hero-photo-2.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo.png", import.meta.url).href,
+  new URL("../assets/images/banners/hero-photo-3.png", import.meta.url).href,
 ];
 
 
@@ -219,16 +219,17 @@ export function HeroSection() {
                 src={heroImages[currentImage]}
                 alt="Gaming PC"
                 loading="eager"
-                decoding="sync"
-                initial={imagesLoaded ? { opacity: 0, x: -80 } : false}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -80 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="relative z-10 w-full h-auto object-cover"
+                decoding="async"
+                initial={imagesLoaded ? { opacity: 0, y: 10, scale: 0.99 } : false}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.99 }}
+                transition={{ duration: 0.65, ease: "easeOut" }}
+                className="relative z-10 w-full h-auto object-cover will-change-transform"
                 style={{
-                  filter: `drop-shadow(0 0 22px ${glowColor}) drop-shadow(0 0 60px ${glowColor})`,
+                  filter: `blur(0px) drop-shadow(0 0 26px ${glowColor}) drop-shadow(0 0 90px ${glowColor})`,
                 }}
               />
+
             </AnimatePresence>
 
           </motion.div>
