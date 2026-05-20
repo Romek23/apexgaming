@@ -5,7 +5,9 @@ import { ArrowRight, Sparkles } from "lucide-react";
 const heroImages = [
   new URL("../assets/images/banners/hero-photo-1.png", import.meta.url).href,
   new URL("../assets/images/banners/hero-photo-2.png", import.meta.url).href,
+  new URL("../assets/images/banners/hero-photo.png", import.meta.url).href,
 ];
+
 
 export function HeroSection() {
   const [currentImage, setCurrentImage] = useState(0);
