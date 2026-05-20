@@ -10,26 +10,101 @@ const heroImages = [
 export function HeroSection() {
   const [currentImage, setCurrentImage] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [glowColor, setGlowColor] = useState<string>("rgb(59,130,246)");
+
 
   useEffect(() => {
+    let cancelled = false;
+
+    const getAverageGlowFromImage = async (src: string) => {
+      // Try to compute average color from the image to match the glow.
+      // If it fails (CORS or canvas errors), keep default glow color.
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Image load failed"));
+        });
+        if (cancelled) return;
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+
+        // Downscale for performance
+        const scale = 0.08; // smaller = faster
+        const w = Math.max(1, Math.floor(img.naturalWidth * scale));
+        const h = Math.max(1, Math.floor(img.naturalHeight * scale));
+        canvas.width = w;
+        canvas.height = h;
+
+        ctx.drawImage(img, 0, 0, w, h);
+        const { data } = ctx.getImageData(0, 0, w, h);
+
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let count = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const alpha = data[i + 3];
+          if (alpha < 10) continue;
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          count++;
+        }
+
+        if (count === 0) return;
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
+
+        // Boost the glow brightness a bit (so it looks nice on dark background)
+        const boost = 1.35;
+        const rr = Math.min(255, Math.round(r * boost));
+        const gg = Math.min(255, Math.round(g * boost));
+        const bb = Math.min(255, Math.round(b * boost));
+
+        if (!cancelled) {
+          setGlowColor(`rgb(${rr},${gg},${bb})`);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
     const loadedImages = heroImages.map((src) => {
       const img = new Image();
+      img.crossOrigin = "anonymous";
       img.src = src;
       img.onload = () => setImagesLoaded(true);
       return img;
     });
 
+    // Initial color sync
+    getAverageGlowFromImage(heroImages[0]);
+
     const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+      setCurrentImage((prev) => {
+        const next = (prev + 1) % heroImages.length;
+        getAverageGlowFromImage(heroImages[next]);
+        return next;
+      });
     }, 15000);
 
     return () => {
+      cancelled = true;
       clearInterval(interval);
       loadedImages.forEach((img) => {
         img.onload = null;
       });
     };
   }, []);
+
 
   return (
     <section
@@ -124,6 +199,19 @@ export function HeroSection() {
             className="relative z-10 overflow-hidden rounded-[32px] bg-transparent"
           >
             <AnimatePresence mode="wait">
+              <motion.div
+                key={`glow-${heroImages[currentImage]}`}
+                aria-hidden
+                className="pointer-events-none absolute inset-0 z-[1]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                style={{
+                  boxShadow: `0 0 0 0 rgba(0,0,0,0), 0 0 60px ${glowColor}, 0 0 120px ${glowColor}, 0 0 220px ${glowColor}`
+                }}
+              />
+
               <motion.img
                 key={heroImages[currentImage]}
                 src={heroImages[currentImage]}
@@ -134,9 +222,13 @@ export function HeroSection() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -80 }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className="relative w-full h-auto object-cover"
+                className="relative z-10 w-full h-auto object-cover"
+                style={{
+                  filter: `drop-shadow(0 0 22px ${glowColor}) drop-shadow(0 0 60px ${glowColor})`,
+                }}
               />
             </AnimatePresence>
+
           </motion.div>
         </motion.div>
       </div>
