@@ -52,11 +52,27 @@ export default function App() {
     return <HomePage onNavigateCatalog={navigateCatalog} />
   }, [isCatalog])
 
+  const [showLoader, setShowLoader] = useState(true)
+
+  // Гасимо лоадер після першого рендера
+  useMemo(() => {
+    const t = window.setTimeout(() => setShowLoader(false), 600)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  // Показуємо лоадер лише на перемикання home<->catalog, але не залишаємо його назавжди
+  useMemo(() => {
+    setShowLoader(true)
+    const t = window.setTimeout(() => setShowLoader(false), 600)
+    return () => window.clearTimeout(t)
+  }, [isCatalog])
+
   return (
     <>
-      <RouteLoader label="Завантажуємо головну..." />
+      {showLoader ? <RouteLoader label="Завантажуємо головну..." /> : null}
       {content}
     </>
   )
 }
+
 
