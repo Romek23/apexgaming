@@ -108,6 +108,11 @@ export default function App() {
     navigateTo('profile')
   }
 
+  const handleUpdateUser = (nextUser: AppUser) => {
+    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
+    setUser(nextUser)
+  }
+
   const handleLogout = () => {
     window.localStorage.removeItem(USER_STORAGE_KEY)
     setUser(null)
@@ -164,6 +169,7 @@ export default function App() {
           onNavigateHome={navigateHome}
           onNavigateCatalog={navigateCatalog}
           onNavigateBuilder={navigateBuilder}
+          onUpdateUser={handleUpdateUser}
           onLogout={handleLogout}
         />
       )

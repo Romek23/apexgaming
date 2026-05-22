@@ -20,6 +20,24 @@ const navItems = [
   { label: "Контакти", action: "home" },
 ] as const;
 
+function ProfileAvatar({ user }: { user: AppUser }) {
+  if (user.avatarUrl) {
+    return (
+      <img
+        src={user.avatarUrl}
+        alt={user.name}
+        className="h-8 w-8 rounded-full object-cover ring-2 ring-sky-100"
+      />
+    );
+  }
+
+  return (
+    <span className="grid h-8 w-8 place-items-center rounded-full bg-sky-100 text-xs font-black text-sky-700 ring-2 ring-sky-50">
+      {user.name.trim().charAt(0).toUpperCase() || "U"}
+    </span>
+  );
+}
+
 export function Header({
   user,
   onNavigateHome,
@@ -103,7 +121,10 @@ export function Header({
             }`}
           >
             {user ? (
-              <span className="whitespace-nowrap">Вітаємо, {user.name}</span>
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                <ProfileAvatar user={user} />
+                <span>Вітаємо, {user.name}</span>
+              </span>
             ) : (
               <User className="h-5 w-5 text-gray-700" />
             )}
