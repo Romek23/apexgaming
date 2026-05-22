@@ -8,7 +8,7 @@ type AuthPageProps = {
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;
   onNavigateBuilder: () => void;
-  onAuthSuccess: (user: AppUser) => void;
+  onAuthSuccess: (user: AppUser, token: string) => void;
 };
 
 type AuthMode = "login" | "register";
@@ -24,19 +24,20 @@ export function AuthPage({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const title = mode === "login" ? "Увійти в профіль" : "Створити профіль";
   const submitLabel = mode === "login" ? "Увійти" : "Зареєструватися";
 
   const helperText = useMemo(() => {
     if (mode === "login") {
-      return "Введи email і пароль. Поки що це демо-вхід без backend.";
+      return "Введи email і пароль. Backend перевірить, чи є такий користувач.";
     }
 
-    return "Профіль тимчасово збережеться у браузері на цьому пристрої.";
+    return "Після реєстрації профіль буде збережений у базі даних.";
   }, [mode]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const cleanName = name.trim();
@@ -57,11 +58,44 @@ export function AuthPage({
       return;
     }
 
-    const fallbackName = cleanEmail.split("@")[0] || "Гравець";
-    onAuthSuccess({
-      name: mode === "register" ? cleanName : fallbackName,
-      email: cleanEmail,
-    });
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          mode === "register"
+            ? { name: cleanName, email: cleanEmail, password }
+            : { email: cleanEmail, password }
+        ),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Не вдалося виконати запит.");
+        return;
+      }
+
+      onAuthSuccess(
+        {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          avatarUrl: data.user.avatar_url ?? undefined,
+        },
+        data.access_token
+      );
+    } catch {
+      setError("Backend недоступний. Перевір, чи запущений сервер.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -186,9 +220,10 @@ export function AuthPage({
 
             <button
               type="submit"
-              className="mt-2 rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white transition hover:bg-sky-600"
+              disabled={isSubmitting}
+              className="mt-2 rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitLabel}
+              {isSubmitting ? "Зачекай..." : submitLabel}
             </button>
           </form>
         </motion.section>

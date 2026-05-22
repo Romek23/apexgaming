@@ -15,6 +15,7 @@ import { ProfilePage } from './components/ProfilePage'
 import type { AppUser } from './types/user'
 
 const USER_STORAGE_KEY = 'apexgaming:user'
+const TOKEN_STORAGE_KEY = 'apexgaming:token'
 
 function HomePage({
   user,
@@ -102,18 +103,51 @@ export default function App() {
     navigateTo('auth')
   }
 
-  const handleAuthSuccess = (nextUser: AppUser) => {
+  const handleAuthSuccess = (nextUser: AppUser, token: string) => {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, token)
     window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
     setUser(nextUser)
     navigateTo('profile')
   }
 
-  const handleUpdateUser = (nextUser: AppUser) => {
+  const handleUpdateUser = async (nextUser: AppUser) => {
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY)
+
+    if (token) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/avatar`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ avatar_url: nextUser.avatarUrl ?? null }),
+        })
+
+        if (response.ok) {
+          const savedUser = await response.json()
+          const normalizedUser = {
+            id: savedUser.id,
+            name: savedUser.name,
+            email: savedUser.email,
+            avatarUrl: savedUser.avatar_url ?? undefined,
+          }
+
+          window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser))
+          setUser(normalizedUser)
+          return
+        }
+      } catch {
+        // Keep the local profile responsive if the API is temporarily unavailable.
+      }
+    }
+
     window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
     setUser(nextUser)
   }
 
   const handleLogout = () => {
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY)
     window.localStorage.removeItem(USER_STORAGE_KEY)
     setUser(null)
     navigateTo('home')
