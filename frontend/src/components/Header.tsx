@@ -99,7 +99,7 @@ export function Header({
             whileTap={{ scale: 0.9 }}
             onClick={handleProfileClick}
             className={`rounded-xl transition-all duration-300 hover:bg-gray-100 ${
-              user ? "px-3 py-2 text-sm font-black text-gray-800" : "p-2.5"
+              user ? "px-3 py-2 text-sm font-medium text-gray-700" : "p-2.5"
             }`}
           >
             {user ? (
