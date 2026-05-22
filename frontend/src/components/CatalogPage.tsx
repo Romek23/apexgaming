@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ChevronDown,
   Cpu,
@@ -12,24 +12,18 @@ import {
   Zap,
 } from "lucide-react";
 import { Header } from "./Header";
+import type { AppUser } from "../types/user";
 
-const heroProduct = new URL("../assets/images/banners/hero-photo-5-cutout.png", import.meta.url).href;
+import heroPhoto1 from "../assets/images/banners/Gaming-Computer-Virtual-Reality-Compatibility-PNG-removebg-preview.png";
+import heroPhoto2 from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
+import heroPhoto3 from "../assets/images/banners/hero-photo-4.png";
+import heroPhoto4 from "../assets/images/banners/hero-photo-6.png";
 
-const productImages = [
-  new URL("../assets/images/banners/hero-photo-1-cutout.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-2-cutout.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-3-cutout.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-4-cutout.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-5-cutout.png", import.meta.url).href,
-];
+const heroProduct = heroPhoto1;
 
-const productStockImages = [
-  new URL("../assets/images/products/Ergonomic-Gaming-Computer-Accessory-PNG.png", import.meta.url).href,
-  new URL("../assets/images/products/Gaming-Computer-Connectivity-Option-PNG.png", import.meta.url).href,
-  new URL("../assets/images/products/Gaming-Computer-Gaming-Chair-Setup-PNG.png", import.meta.url).href,
-  new URL("../assets/images/products/Gaming-Computer-Maintenance-Tip-PNG.png", import.meta.url).href,
-  new URL("../assets/images/products/Gaming-Computer-Streaming-Capability-PNG.png", import.meta.url).href,
-];
+const productImages = [heroPhoto1, heroPhoto2, heroPhoto3, heroPhoto4, heroPhoto2];
+
+const productStockImages = [heroPhoto1, heroPhoto2, heroPhoto3, heroPhoto4, heroPhoto1];
 
 const navItems = ["Головна", "Каталог", "Збірки", "Комплектуючі", "Контакти"];
 
@@ -450,6 +444,23 @@ const products = [
   },
 ];
 
+const parseProductPrice = (price: string) => Number(price.replace(/\D/g, ""));
+
+const catalogPriceBounds = products.reduce(
+  (bounds, product) => {
+    const price = parseProductPrice(product.price);
+    return {
+      min: Math.min(bounds.min, price),
+      max: Math.max(bounds.max, price),
+    };
+  },
+  { min: Number.POSITIVE_INFINITY, max: 0 }
+);
+
+const PRICE_STEP = 1000;
+
+const formatPrice = (value: number) => `${value.toLocaleString("uk-UA")} грн`;
+
 function FilterGroup({
   title,
   options,
@@ -501,17 +512,57 @@ function FilterGroup({
 }
 
 type CatalogPageProps = {
+  user?: AppUser | null;
   onNavigateHome?: () => void;
   onNavigateCatalog?: () => void;
+  onNavigateBuilder?: () => void;
+  onNavigateAuth?: () => void;
+  onNavigateProfile?: () => void;
 };
 
-export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPageProps) {
+export function CatalogPage({
+  user,
+  onNavigateHome,
+  onNavigateCatalog,
+  onNavigateBuilder,
+  onNavigateAuth,
+  onNavigateProfile,
+}: CatalogPageProps) {
   const ITEMS_PER_PAGE = 6;
 
   const catalogTopRef = useRef<HTMLDivElement | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, Set<string>>>({});
+  const initialPriceRange: [number, number] = [catalogPriceBounds.min, catalogPriceBounds.max];
+  const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(initialPriceRange);
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    catalogPriceBounds.min,
+    catalogPriceBounds.max,
+  ]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setPriceRange(draftPriceRange);
+      setCurrentPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [draftPriceRange]);
+
+  const updateDraftPriceRange = (nextRange: [number, number]) => {
+    setDraftPriceRange(nextRange);
+  };
+
+  const updateMinPrice = (value: number) => {
+    const nextMin = Math.max(catalogPriceBounds.min, Math.min(value, draftPriceRange[1] - PRICE_STEP));
+    updateDraftPriceRange([nextMin, draftPriceRange[1]]);
+  };
+
+  const updateMaxPrice = (value: number) => {
+    const nextMax = Math.min(catalogPriceBounds.max, Math.max(value, draftPriceRange[0] + PRICE_STEP));
+    updateDraftPriceRange([draftPriceRange[0], nextMax]);
+  };
 
   const toggleFilter = (groupTitle: string, option: string) => {
     setSelectedFilters((prev) => {
@@ -555,12 +606,15 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
 
     // AND між групами
     return products.filter((product) => {
-      return filters.every((f) => {
+      const productPrice = parseProductPrice(product.price);
+      const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1];
+
+      return matchesPrice && filters.every((f) => {
         if (!hasGroup(f.title)) return true;
         return optionMatches(product, f.title, selectedFilters[f.title]);
       });
     });
-  }, [selectedFilters]);
+  }, [priceRange, selectedFilters]);
 
   const totalPages = useMemo(
     () => Math.ceil(filteredProducts.length / ITEMS_PER_PAGE),
@@ -587,7 +641,14 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-950">
-      <Header onNavigateHome={onNavigateHome} onNavigateCatalog={onNavigateCatalog} />
+      <Header
+        user={user}
+        onNavigateHome={onNavigateHome}
+        onNavigateCatalog={onNavigateCatalog}
+        onNavigateBuilder={onNavigateBuilder}
+        onNavigateAuth={onNavigateAuth}
+        onNavigateProfile={onNavigateProfile}
+      />
 
       <main>
         <section className="relative overflow-hidden bg-[#061a3a] pt-20">
@@ -617,11 +678,11 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
               transition={{ duration: 0.8, delay: 0.1 }}
               className="relative min-h-[360px]"
             >
-              <div className="absolute inset-8 rounded-full bg-sky-400/30 blur-[90px]" />
+              <div className="absolute inset-8 rounded-full bg-sky-400/42 blur-[76px]" />
               <img
                 src={heroProduct}
                 alt="Gaming PC"
-                className="relative z-10 ml-auto max-h-[430px] w-full object-contain drop-shadow-[0_0_60px_rgba(14,165,233,0.55)]"
+                className="relative z-10 ml-auto max-h-[430px] w-full object-contain drop-shadow-[0_0_54px_rgba(14,165,233,0.68)]"
               />
             </motion.div>
           </div>
@@ -643,10 +704,66 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
               <div className="mb-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-950">Ціна</h3>
-                  <span className="text-sm font-bold text-sky-600">25k - 150k</span>
+                  <span className="text-sm font-bold text-sky-600">
+                    {formatPrice(draftPriceRange[0])} - {formatPrice(draftPriceRange[1])}
+                  </span>
                 </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div className="h-2 w-3/4 rounded-full bg-gradient-to-r from-sky-500 to-blue-700 shadow-[0_0_24px_rgba(14,165,233,0.45)]" />
+                <div className="relative mb-5 h-6">
+                  <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
+                  <div
+                    className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-gradient-to-r from-sky-500 to-blue-700 shadow-[0_0_24px_rgba(14,165,233,0.45)]"
+                    style={{
+                      left: `${((draftPriceRange[0] - catalogPriceBounds.min) / (catalogPriceBounds.max - catalogPriceBounds.min)) * 100}%`,
+                      right: `${100 - ((draftPriceRange[1] - catalogPriceBounds.min) / (catalogPriceBounds.max - catalogPriceBounds.min)) * 100}%`,
+                    }}
+                  />
+                  <input
+                    type="range"
+                    min={catalogPriceBounds.min}
+                    max={catalogPriceBounds.max}
+                    step={PRICE_STEP}
+                    value={draftPriceRange[0]}
+                    onChange={(event) => updateMinPrice(Number(event.target.value))}
+                    aria-label="Minimum price"
+                    className="pointer-events-none absolute inset-0 h-6 w-full appearance-none bg-transparent accent-sky-500 [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
+                  />
+                  <input
+                    type="range"
+                    min={catalogPriceBounds.min}
+                    max={catalogPriceBounds.max}
+                    step={PRICE_STEP}
+                    value={draftPriceRange[1]}
+                    onChange={(event) => updateMaxPrice(Number(event.target.value))}
+                    aria-label="Maximum price"
+                    className="pointer-events-none absolute inset-0 h-6 w-full appearance-none bg-transparent accent-sky-500 [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Min
+                    <input
+                      type="number"
+                      min={catalogPriceBounds.min}
+                      max={draftPriceRange[1] - PRICE_STEP}
+                      step={PRICE_STEP}
+                      value={draftPriceRange[0]}
+                      onChange={(event) => updateMinPrice(Number(event.target.value))}
+                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold tracking-normal text-slate-900 outline-none transition focus:border-sky-400"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Max
+                    <input
+                      type="number"
+                      min={draftPriceRange[0] + PRICE_STEP}
+                      max={catalogPriceBounds.max}
+                      step={PRICE_STEP}
+                      value={draftPriceRange[1]}
+                      onChange={(event) => updateMaxPrice(Number(event.target.value))}
+                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold tracking-normal text-slate-900 outline-none transition focus:border-sky-400"
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -701,26 +818,28 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {visibleProducts.map((product, index) => (
-                <motion.article
-                  key={product.name}
-                  initial={{ opacity: 0, y: 22 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.5, delay: index * 0.04 }}
-                  whileHover={{ y: -8, scale: 1.015 }}
-                  className="group overflow-hidden rounded-[28px] border border-slate-200/70 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-500 hover:border-sky-200 hover:shadow-[0_34px_90px_rgba(14,165,233,0.18)]"
-                >
+            <motion.div layout className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <AnimatePresence mode="popLayout">
+                {visibleProducts.map((product, index) => (
+                  <motion.article
+                    layout
+                    key={product.name}
+                    initial={{ opacity: 0, y: 18, scale: 0.985 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 14, scale: 0.985 }}
+                    transition={{ duration: 0.28, delay: index * 0.025, ease: "easeOut" }}
+                    whileHover={{ y: -4 }}
+                    className="group overflow-hidden rounded-[28px] border border-slate-200/70 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-500 hover:border-sky-200 hover:shadow-[0_34px_90px_rgba(14,165,233,0.18)]"
+                  >
                   <div className="relative mb-5 grid aspect-[1.12] place-items-center overflow-hidden rounded-[22px] bg-gradient-to-br from-slate-950 via-[#08204a] to-sky-900">
                     <div
-                      className="absolute inset-6 rounded-full blur-[58px] transition duration-500 group-hover:scale-110"
+                      className="absolute inset-7 rounded-full opacity-90 blur-[48px] transition-opacity duration-300 group-hover:opacity-100"
                       style={{ backgroundColor: product.glow }}
                     />
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="relative z-10 max-h-[86%] w-full object-contain drop-shadow-[0_0_38px_rgba(56,189,248,0.36)] transition duration-500 group-hover:scale-105"
+                      className="relative z-10 max-h-[86%] w-full object-contain drop-shadow-[0_0_36px_rgba(56,189,248,0.50)] transition-transform duration-500 group-hover:scale-105"
                     />
                     <span className="absolute left-4 top-4 rounded-full border border-white/45 bg-slate-950/58 px-3 py-1 text-xs font-black text-white shadow-[0_0_22px_rgba(14,165,233,0.34)] backdrop-blur-xl">
                       {product.fps}
@@ -766,9 +885,10 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
                       Детальніше
                     </button>
                   </div>
-                </motion.article>
-              ))}
-            </div>
+                  </motion.article>
+                ))}
+              </AnimatePresence>
+            </motion.div>
 
             {shouldShowPagination ? (
               <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -851,6 +971,7 @@ export function CatalogPage({ onNavigateHome, onNavigateCatalog }: CatalogPagePr
                   onClick={() => {
                     if (index === 0) onNavigateHome?.();
                     if (index === 1) onNavigateCatalog?.();
+                    if (index === 2) onNavigateBuilder?.();
                   }}
                   className="text-left transition hover:text-white"
                 >
