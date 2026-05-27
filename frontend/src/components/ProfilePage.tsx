@@ -15,6 +15,7 @@ type ProfilePageProps = {
 
 const AVATAR_SIZE = 320;
 
+// Зменшує аватар перед збереженням, щоб не класти у localStorage занадто великий файл.
 function readResizedAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
@@ -22,10 +23,12 @@ function readResizedAvatar(file: File): Promise<string> {
       return;
     }
 
+    // FileReader читає файл з комп'ютера користувача як data URL.
     const reader = new FileReader();
 
     reader.onerror = () => reject(new Error("Не вдалося прочитати файл."));
     reader.onload = () => {
+      // Коли файл прочитано, створюємо об'єкт картинки.
       const image = new Image();
 
       image.onerror = () => reject(new Error("Не вдалося завантажити зображення."));
@@ -44,7 +47,10 @@ function readResizedAvatar(file: File): Promise<string> {
           return;
         }
 
+        // Малюємо зменшену картинку на canvas.
         context.drawImage(image, 0, 0, width, height);
+
+        // Повертаємо готову картинку як рядок, який можна зберегти у профілі.
         resolve(canvas.toDataURL("image/jpeg", 0.82));
       };
 
@@ -63,27 +69,34 @@ export function ProfilePage({
   onUpdateUser,
   onLogout,
 }: ProfilePageProps) {
+  // ref дозволяє відкрити прихований input для вибору файлу по кліку на кнопку.
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Повідомлення після додавання або видалення аватара.
   const [avatarMessage, setAvatarMessage] = useState("");
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    // Беремо перший вибраний файл.
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
     try {
+      // Читаємо і зменшуємо аватар, потім передаємо оновленого користувача вище в App.tsx.
       const avatarUrl = await readResizedAvatar(file);
       onUpdateUser({ ...user, avatarUrl });
       setAvatarMessage("Аватар збережено.");
     } catch (error) {
       setAvatarMessage(error instanceof Error ? error.message : "Не вдалося зберегти аватар.");
     } finally {
+      // Очищаємо input, щоб той самий файл можна було вибрати повторно.
       event.target.value = "";
     }
   };
 
   const removeAvatar = () => {
+    // Створюємо користувача без avatarUrl і зберігаємо оновлення.
     const nextUser = { name: user.name, email: user.email };
     onUpdateUser(nextUser);
     setAvatarMessage("Аватар видалено.");

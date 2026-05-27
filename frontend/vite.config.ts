@@ -1,6 +1,6 @@
 /**
- * Vite configuration for ApexGaming Frontend
- * Configured for React + TypeScript + Tailwind CSS
+ * Налаштування Vite для фронтенду ApexGaming.
+ * Тут підключається React і задається локальний сервер розробки.
  */
 
 import { defineConfig } from 'vite'

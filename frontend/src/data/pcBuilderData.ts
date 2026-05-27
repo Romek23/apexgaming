@@ -1,5 +1,7 @@
 export type PartCategoryId = "cpu" | "motherboard" | "gpu" | "ram" | "storage" | "psu" | "case" | "cooling";
 
+// Опис однієї комплектуючої для конструктора ПК.
+// Частина полів необов'язкова, бо вони потрібні тільки певним категоріям.
 export type PcPart = {
   id: string;
   categoryId: PartCategoryId;
@@ -9,6 +11,8 @@ export type PcPart = {
   wattage: number;
   specs: string[];
   badge?: string;
+
+  // Поля нижче потрібні для перевірки сумісності деталей.
   socket?: "LGA1700" | "AM5";
   ramType?: "DDR5";
   formFactor?: "ATX" | "mATX" | "Mini-ITX";
@@ -19,12 +23,14 @@ export type PcPart = {
   coolerSockets?: Array<"LGA1700" | "AM5">;
 };
 
+// Опис категорії у лівому меню конструктора.
 export type PartCategory = {
   id: PartCategoryId;
   label: string;
   description: string;
 };
 
+// Категорії, між якими перемикається користувач у конструкторі.
 export const partCategories: PartCategory[] = [
   { id: "cpu", label: "Процесор", description: "Intel та Ryzen для ігор і роботи" },
   { id: "motherboard", label: "Материнська плата", description: "Платформа для майбутньої сумісності" },
@@ -36,6 +42,8 @@ export const partCategories: PartCategory[] = [
   { id: "cooling", label: "Охолодження", description: "Повітряне або рідинне охолодження" },
 ];
 
+// Список доступних комплектуючих.
+// Саме ці дані показуються у конструкторі ПК.
 export const pcParts: PcPart[] = [
   {
     id: "cpu-14600kf",

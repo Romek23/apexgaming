@@ -6,6 +6,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
+# Беремо рядок підключення до PostgreSQL з файлу .env.
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -17,6 +18,7 @@ Base = declarative_base()
 
 
 def get_db():
+    # Створюємо підключення до бази для одного запиту і закриваємо його після роботи.
     db = SessionLocal()
     try:
         yield db

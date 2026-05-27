@@ -1,5 +1,6 @@
 /**
- * TypeScript configuration for ApexGaming Frontend
+ * Налаштування TypeScript для фронтенду ApexGaming.
+ * Цей файл вказує, як TypeScript має перевіряти код.
  */
 
 {
@@ -12,7 +13,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
 
-    /* Bundler mode */
+    /* Режим збірки через Vite */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -20,13 +21,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Суворі перевірки коду */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Path mapping */
+    /* Короткий шлях @ до папки src */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

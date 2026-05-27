@@ -13,7 +13,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
+# Дозволяємо фронтенду звертатися до бекенду з локального браузера.
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",

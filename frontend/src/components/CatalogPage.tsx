@@ -21,12 +21,15 @@ import heroPhoto4 from "../assets/images/banners/hero-photo-6.png";
 
 const heroProduct = heroPhoto1;
 
+// Масиви зображень використовуються повторно для карток товарів.
+// Так не потрібно імпортувати окрему картинку для кожного ПК.
 const productImages = [heroPhoto1, heroPhoto2, heroPhoto3, heroPhoto4, heroPhoto2];
 
 const productStockImages = [heroPhoto1, heroPhoto2, heroPhoto3, heroPhoto4, heroPhoto1];
 
 const navItems = ["Головна", "Каталог", "Збірки", "Комплектуючі", "Контакти"];
 
+// Налаштування фільтрів зліва: назва групи і варіанти вибору.
 const filters = [
   { title: "RTX серія", options: ["RTX 4060", "RTX 4070", "RTX 4080", "RTX 4090"] },
   { title: "Процесор", options: ["Intel", "Ryzen"] },
@@ -35,6 +38,8 @@ const filters = [
   { title: "Бренд", options: ["APEX", "ROG Style", "NZXT Style"] },
 ];
 
+// Дані товарів каталогу.
+// Зараз вони зберігаються прямо у фронтенді, а в реальному магазині можуть приходити з бекенду.
 const products = [
   {
     name: "Apex Nova X1",
@@ -181,7 +186,7 @@ const products = [
     purpose: "Workstation",
   },
 
-  // --- Added ~20 more configs (duplicated catalog images, unique characteristics/prices) ---
+  // Додаткові готові ПК для каталогу з різними характеристиками та цінами.
   {
     name: "Apex Nova X2",
     cpu: "Intel Core i5-13400F",
@@ -528,20 +533,33 @@ export function CatalogPage({
   onNavigateAuth,
   onNavigateProfile,
 }: CatalogPageProps) {
+  // Скільки товарів показуємо на одній сторінці каталогу.
   const ITEMS_PER_PAGE = 6;
 
+  // ref потрібен, щоб після зміни фільтрів або сторінки прокрутити каталог догори.
   const catalogTopRef = useRef<HTMLDivElement | null>(null);
+
+  // Поточна сторінка пагінації.
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Тут зберігаються вибрані чекбокси фільтрів.
+  // Ключ - назва групи, значення - набір вибраних варіантів.
   const [selectedFilters, setSelectedFilters] = useState<Record<string, Set<string>>>({});
+
+  // Початковий діапазон ціни: від найдешевшого до найдорожчого товару.
   const initialPriceRange: [number, number] = [catalogPriceBounds.min, catalogPriceBounds.max];
+
+  // draftPriceRange змінюється одразу під час руху слайдера.
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(initialPriceRange);
+
+  // priceRange застосовується до фільтрації після маленької затримки.
   const [priceRange, setPriceRange] = useState<[number, number]>([
     catalogPriceBounds.min,
     catalogPriceBounds.max,
   ]);
 
   useEffect(() => {
+    // Затримка 250 мс не дає перераховувати каталог на кожен дрібний рух слайдера.
     const timeout = window.setTimeout(() => {
       setPriceRange(draftPriceRange);
       setCurrentPage(1);
@@ -551,32 +569,38 @@ export function CatalogPage({
   }, [draftPriceRange]);
 
   const updateDraftPriceRange = (nextRange: [number, number]) => {
+    // Оновлюємо тимчасовий діапазон ціни, який бачить користувач.
     setDraftPriceRange(nextRange);
   };
 
   const updateMinPrice = (value: number) => {
+    // Мінімальна ціна не може бути нижчою за межу каталогу або більшою за максимальну.
     const nextMin = Math.max(catalogPriceBounds.min, Math.min(value, draftPriceRange[1] - PRICE_STEP));
     updateDraftPriceRange([nextMin, draftPriceRange[1]]);
   };
 
   const updateMaxPrice = (value: number) => {
+    // Максимальна ціна не може бути вищою за межу каталогу або меншою за мінімальну.
     const nextMax = Math.min(catalogPriceBounds.max, Math.max(value, draftPriceRange[0] + PRICE_STEP));
     updateDraftPriceRange([draftPriceRange[0], nextMax]);
   };
 
   const toggleFilter = (groupTitle: string, option: string) => {
+    // Вмикаємо або вимикаємо один пункт фільтра.
     setSelectedFilters((prev) => {
       const next = { ...prev };
       const groupSet = new Set(next[groupTitle] ?? []);
       if (groupSet.has(option)) groupSet.delete(option);
       else groupSet.add(option);
 
+      // Якщо в групі нічого не вибрано, прибираємо її з об'єкта фільтрів.
       if (groupSet.size === 0) delete next[groupTitle];
       else next[groupTitle] = groupSet;
 
       return next;
     });
 
+    // Після зміни фільтра повертаємо користувача на першу сторінку.
     setCurrentPage(1);
     requestAnimationFrame(() => {
       catalogTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -584,14 +608,17 @@ export function CatalogPage({
   };
 
   const filteredProducts = useMemo(() => {
+    // hasGroup показує, чи є активні фільтри у конкретній групі.
     const hasGroup = (title: string) => !!selectedFilters[title]?.size;
 
+    // Перевіряє, чи товар підходить під вибрані варіанти однієї групи.
     const optionMatches = (product: (typeof products)[number], groupTitle: string, options: Set<string>) => {
       const optionList = [...options];
 
+      // Допоміжна функція: чи містить характеристика товару потрібний текст.
       const any = (substr: string | undefined, opt: string) => (substr ?? "").includes(opt);
 
-      // OR всередині групи
+      // Усередині однієї групи підходить хоча б один вибраний варіант.
       return optionList.some((opt) => {
         if (groupTitle === "RTX серія") return any(product.gpu, opt);
         if (groupTitle === "Процесор") return any(product.cpu, opt);
@@ -604,11 +631,13 @@ export function CatalogPage({
       });
     };
 
-    // AND між групами
+    // Між різними групами товар має пройти всі активні фільтри.
     return products.filter((product) => {
+      // Спочатку перевіряємо, чи ціна товару входить у вибраний діапазон.
       const productPrice = parseProductPrice(product.price);
       const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1];
 
+      // Потім перевіряємо всі групи фільтрів.
       return matchesPrice && filters.every((f) => {
         if (!hasGroup(f.title)) return true;
         return optionMatches(product, f.title, selectedFilters[f.title]);
@@ -617,12 +646,16 @@ export function CatalogPage({
   }, [priceRange, selectedFilters]);
 
   const totalPages = useMemo(
+    // Кількість сторінок залежить від кількості товарів після фільтрації.
     () => Math.ceil(filteredProducts.length / ITEMS_PER_PAGE),
     [filteredProducts.length]
   );
+
+  // Навіть якщо товарів немає, залишаємо мінімум одну сторінку, щоб логіка не ламалась.
   const safeTotalPages = Math.max(1, totalPages);
 
   const visibleProducts = useMemo(() => {
+    // Вибираємо тільки ті товари, які мають бути видимі на поточній сторінці.
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
     return filteredProducts.slice(start, end);
@@ -631,6 +664,7 @@ export function CatalogPage({
   const shouldShowPagination = filteredProducts.length > ITEMS_PER_PAGE;
 
   const goToPage = (page: number) => {
+    // Не дозволяємо перейти нижче 1 або вище останньої сторінки.
     const next = Math.min(Math.max(1, page), safeTotalPages);
     setCurrentPage(next);
 

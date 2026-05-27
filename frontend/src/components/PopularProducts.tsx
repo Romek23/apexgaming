@@ -1,5 +1,9 @@
 import { motion } from "motion/react";
 import { ArrowRight, Cpu, HardDrive, Zap } from "lucide-react";
+import productBlue from "../assets/images/banners/Gaming-Computer-Virtual-Reality-Compatibility-PNG-removebg-preview.png";
+import productPink from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
+import productRed from "../assets/images/banners/hero-photo-4.png";
+import productGreen from "../assets/images/banners/hero-photo-6.png";
 
 const products = [
   {
@@ -9,7 +13,7 @@ const products = [
     gpu: "RTX 4090",
     ram: "64GB DDR5",
     price: "149,999 ₴",
-    image: "https://images.unsplash.com/photo-1704871132546-d1d3b845ae65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
+    image: productBlue,
     badge: "TOP SELLER"
   },
   {
@@ -19,7 +23,7 @@ const products = [
     gpu: "RTX 4080",
     ram: "32GB DDR5",
     price: "119,999 ₴",
-    image: "https://images.unsplash.com/photo-1658673934023-6005e1ff7ec2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800"
+    image: productPink
   },
   {
     id: 3,
@@ -28,7 +32,7 @@ const products = [
     gpu: "RTX 4070 Ti",
     ram: "32GB DDR5",
     price: "99,999 ₴",
-    image: "https://images.unsplash.com/photo-1704871132518-94cadb901021?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800"
+    image: productRed
   },
   {
     id: 4,
@@ -37,12 +41,16 @@ const products = [
     gpu: "RTX 4060 Ti",
     ram: "16GB DDR5",
     price: "69,999 ₴",
-    image: "https://images.unsplash.com/photo-1658673934021-cb0ba771f8ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
+    image: productGreen,
     badge: "BEST VALUE"
   }
 ];
 
-export function PopularProducts() {
+type PopularProductsProps = {
+  onNavigateCatalog: () => void;
+};
+
+export function PopularProducts({ onNavigateCatalog }: PopularProductsProps) {
   return (
     <section className="py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.03),transparent_70%)]" />
@@ -82,12 +90,12 @@ export function PopularProducts() {
                 </div>
               )}
 
-              <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 aspect-square">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-[#08204a] to-sky-900 aspect-square">
+                <div className="absolute inset-8 rounded-full bg-sky-400/42 opacity-90 blur-[44px] transition-opacity duration-300 group-hover:opacity-100" />
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  className="relative z-10 h-full w-full object-contain p-5 drop-shadow-[0_0_34px_rgba(56,189,248,0.48)] transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
 
@@ -117,6 +125,9 @@ export function PopularProducts() {
                     <div className="text-2xl font-bold text-gray-900">{product.price}</div>
                   </div>
                   <motion.button
+                    type="button"
+                    onClick={onNavigateCatalog}
+                    aria-label={`Переглянути ${product.name} у каталозі`}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg shadow-blue-600/50"
@@ -136,6 +147,8 @@ export function PopularProducts() {
           className="text-center mt-12"
         >
           <motion.button
+            type="button"
+            onClick={onNavigateCatalog}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="px-8 py-4 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl font-medium transition-all duration-300"

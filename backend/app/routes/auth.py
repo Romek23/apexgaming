@@ -11,6 +11,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=AuthResponse)
 def register(payload: UserRegister, db: Session = Depends(get_db)):
+    # Реєстрація створює нового користувача, якщо email ще не зайнятий.
     email = payload.email.lower()
     name = payload.name.strip()
 
@@ -31,6 +32,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
+    # Після реєстрації одразу видаємо токен, щоб користувач був авторизований.
     token = create_access_token({"sub": str(user.id)})
 
     return {
@@ -42,6 +44,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=AuthResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
+    # Вхід шукає користувача за email і перевіряє пароль.
     email = payload.email.lower()
     user = db.query(User).filter(User.email == email).first()
 
@@ -51,6 +54,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
             detail="Невірний email або пароль",
         )
 
+    # Якщо пароль правильний, створюємо новий токен доступу.
     token = create_access_token({"sub": str(user.id)})
 
     return {

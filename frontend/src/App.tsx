@@ -17,6 +17,7 @@ import type { AppUser } from './types/user'
 const USER_STORAGE_KEY = 'apexgaming:user'
 const TOKEN_STORAGE_KEY = 'apexgaming:token'
 
+// Головна сторінка збирає всі основні блоки сайту в один екран.
 function HomePage({
   user,
   onNavigateCatalog,
@@ -40,19 +41,39 @@ function HomePage({
         onNavigateAuth={onNavigateAuth}
         onNavigateProfile={onNavigateProfile}
       />
-      <HeroSection />
-      <PopularProducts />
+      {/* Головний банер сайту з основною пропозицією магазину. */}
+      <HeroSection onNavigateCatalog={onNavigateCatalog} />
+
+      {/* Блок із популярними готовими комп'ютерами. */}
+      <PopularProducts onNavigateCatalog={onNavigateCatalog} />
+
+      {/* Переваги магазину: доставка, гарантія, підтримка. */}
       <Advantages />
-      <CustomBuild />
-      <SetupBanner />
+
+      {/* Блок про індивідуальну збірку ПК під потреби клієнта. */}
+      <CustomBuild onNavigateBuilder={onNavigateBuilder} />
+
+      {/* Додатковий рекламний банер із сетапом. */}
+      <SetupBanner onNavigateCatalog={onNavigateCatalog} />
+
+      {/* Відгуки клієнтів для довіри до магазину. */}
       <Reviews />
-      <Footer />
+
+      {/* Нижня частина сайту з навігацією та контактами. */}
+      <Footer
+        onNavigateHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateCatalog={onNavigateCatalog}
+        onNavigateBuilder={onNavigateBuilder}
+      />
     </div>
   )
 }
 
 export default function App() {
+  // page зберігає, яку сторінку зараз треба показати.
   const [page, setPage] = useState<'home' | 'catalog' | 'builder' | 'auth' | 'profile'>('home')
+
+  // При відкритті сайту пробуємо взяти користувача з localStorage.
   const [user, setUser] = useState<AppUser | null>(() => {
     const savedUser = window.localStorage.getItem(USER_STORAGE_KEY)
 
@@ -71,6 +92,7 @@ export default function App() {
 
   const [showLoader, setShowLoader] = useState(false)
 
+  // Одна функція для переходу між сторінками з короткою анімацією завантаження.
   const navigateTo = (nextPage: typeof page) => {
     setShowLoader(true)
     setPage(nextPage)
@@ -79,22 +101,27 @@ export default function App() {
   }
 
   const navigateHome = () => {
+    // Перехід на головну сторінку.
     navigateTo('home')
   }
 
   const navigateCatalog = () => {
+    // Перехід до каталогу готових ПК.
     navigateTo('catalog')
   }
 
   const navigateBuilder = () => {
+    // Перехід до конструктора, де можна підібрати комплектуючі.
     navigateTo('builder')
   }
 
   const navigateAuth = () => {
+    // Перехід до сторінки входу або реєстрації.
     navigateTo('auth')
   }
 
   const navigateProfile = () => {
+    // Якщо користувач не увійшов, замість профілю показуємо сторінку входу.
     if (user) {
       navigateTo('profile')
       return
@@ -104,6 +131,7 @@ export default function App() {
   }
 
   const handleAuthSuccess = (nextUser: AppUser, token: string) => {
+    // Після входу зберігаємо токен і дані користувача в браузері.
     window.localStorage.setItem(TOKEN_STORAGE_KEY, token)
     window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser))
     setUser(nextUser)
@@ -111,6 +139,7 @@ export default function App() {
   }
 
   const handleUpdateUser = async (nextUser: AppUser) => {
+    // Якщо є токен, пробуємо зберегти аватар на сервері.
     const token = window.localStorage.getItem(TOKEN_STORAGE_KEY)
 
     if (token) {
@@ -138,7 +167,7 @@ export default function App() {
           return
         }
       } catch {
-        // Keep the local profile responsive if the API is temporarily unavailable.
+        // Якщо сервер тимчасово не відповідає, все одно оновлюємо профіль локально.
       }
     }
 
@@ -147,6 +176,7 @@ export default function App() {
   }
 
   const handleLogout = () => {
+    // При виході очищаємо дані входу і повертаємо користувача на головну.
     window.localStorage.removeItem(TOKEN_STORAGE_KEY)
     window.localStorage.removeItem(USER_STORAGE_KEY)
     setUser(null)
@@ -158,7 +188,9 @@ export default function App() {
   const isAuth = page === 'auth'
   const isProfile = page === 'profile'
 
+  // Ці змінні роблять умови нижче коротшими і зрозумілішими.
   const content = useMemo(() => {
+    // Тут вибираємо, який компонент сторінки показувати зараз.
     if (isCatalog) {
       return (
         <CatalogPage

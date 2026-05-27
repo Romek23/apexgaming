@@ -13,6 +13,7 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
+    # Ця функція дістає поточного користувача з токена Authorization.
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -22,6 +23,7 @@ def get_current_user(
     payload = decode_access_token(credentials.credentials)
     user_id = payload.get("sub") if payload else None
 
+    # У полі sub зберігається id користувача, який був записаний у токен.
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

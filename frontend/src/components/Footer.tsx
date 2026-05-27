@@ -1,105 +1,142 @@
 import { motion } from "motion/react";
-import { Globe, Share2, MessageCircle, Video, Mail } from "lucide-react";
+import { Globe, Mail, MessageCircle, Share2, Video } from "lucide-react";
 
-export function Footer() {
+type FooterProps = {
+  onNavigateHome: () => void;
+  onNavigateCatalog: () => void;
+  onNavigateBuilder: () => void;
+};
+
+const navigationItems = [
+  { label: "Головна", action: "home" },
+  { label: "Каталог", action: "catalog" },
+  { label: "Збірки", action: "builder" },
+  { label: "Комплектуючі", action: "catalog" },
+  { label: "Про нас", action: "home" },
+] as const;
+
+const supportItems = ["Доставка та оплата", "Гарантія", "Повернення", "FAQ", "Контакти"];
+
+export function Footer({ onNavigateHome, onNavigateCatalog, onNavigateBuilder }: FooterProps) {
+  const handleNavigation = (action: (typeof navigationItems)[number]["action"]) => {
+    if (action === "catalog") onNavigateCatalog();
+    else if (action === "builder") onNavigateBuilder();
+    else onNavigateHome();
+  };
+
+  const handleNewsletterSubmit = () => {
+    window.alert("Дякуємо! Підписку прийнято для демонстрації.");
+  };
+
   return (
-    <footer className="bg-gradient-to-br from-[#071B3B] via-[#0A2647] to-[#071B3B] text-white relative overflow-hidden">
+    <footer className="relative overflow-hidden bg-gradient-to-br from-[#071B3B] via-[#0A2647] to-[#071B3B] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(37,99,235,0.1),transparent_70%)]" />
 
-      <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-16">
+        <div className="mb-12 grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <motion.div
+            <motion.button
+              type="button"
+              onClick={onNavigateHome}
               whileHover={{ scale: 1.05 }}
-              className="text-2xl mb-4 cursor-pointer"
+              className="mb-4 cursor-pointer text-2xl"
             >
-              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent font-bold">APEX</span>
-              <span className="text-white font-light">GAMING</span>
-            </motion.div>
-            <p className="text-blue-200/70 leading-relaxed mb-6">
-              Преміальні ігрові комп'ютери та комплектуючі для справжніх геймерів
+              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text font-bold text-transparent">APEX</span>
+              <span className="font-light text-white">GAMING</span>
+            </motion.button>
+            <p className="mb-6 leading-relaxed text-blue-200/70">
+              Преміальні ігрові комп'ютери та комплектуючі для справжніх геймерів.
             </p>
             <div className="flex gap-3">
               {[Globe, Share2, MessageCircle, Video].map((Icon, i) => (
                 <motion.a
                   key={i}
-                  href="#"
+                  href="mailto:hello@apexgaming.ua"
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-3 bg-blue-500/10 hover:bg-blue-500 rounded-xl transition-all duration-300 backdrop-blur-sm border border-blue-500/20"
+                  className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3 backdrop-blur-sm transition-all duration-300 hover:bg-blue-500"
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="h-5 w-5" />
                 </motion.a>
               ))}
             </div>
           </div>
 
           <div>
-            <h4 className="font-bold text-white mb-4">Навігація</h4>
+            <h4 className="mb-4 font-bold text-white">Навігація</h4>
             <ul className="space-y-3">
-              {['Головна', 'Каталог', 'Збірки', 'Комплектуючі', 'Про нас'].map((item, i) => (
-                <li key={i}>
-                  <a href="#" className="text-blue-200/70 hover:text-blue-400 transition-colors inline-block hover:translate-x-1 duration-300">
-                    {item}
-                  </a>
+              {navigationItems.map((item) => (
+                <li key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigation(item.action)}
+                    className="inline-block text-blue-200/70 transition-colors duration-300 hover:translate-x-1 hover:text-blue-400"
+                  >
+                    {item.label}
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-white mb-4">Підтримка</h4>
+            <h4 className="mb-4 font-bold text-white">Підтримка</h4>
             <ul className="space-y-3">
-              {['Доставка та оплата', 'Гарантія', 'Повернення', 'FAQ', 'Контакти'].map((item, i) => (
-                <li key={i}>
-                  <a href="#" className="text-blue-200/70 hover:text-blue-400 transition-colors inline-block hover:translate-x-1 duration-300">
+              {supportItems.map((item) => (
+                <li key={item}>
+                  <button
+                    type="button"
+                    onClick={onNavigateHome}
+                    className="inline-block text-blue-200/70 transition-colors duration-300 hover:translate-x-1 hover:text-blue-400"
+                  >
                     {item}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-white mb-4">Розсилка</h4>
-            <p className="text-blue-200/70 mb-4 text-sm">
-              Отримуй новини про акції та нові продукти
+            <h4 className="mb-4 font-bold text-white">Розсилка</h4>
+            <p className="mb-4 text-sm text-blue-200/70">
+              Отримуй новини про акції та нові продукти.
             </p>
-            <div className="flex gap-2 mb-6">
+            <div className="mb-6 flex gap-2">
               <input
                 type="email"
                 placeholder="Твій email"
-                className="flex-1 px-4 py-3 bg-white/5 border border-blue-500/20 rounded-xl text-white placeholder:text-blue-200/40 focus:outline-none focus:border-blue-400 transition-colors backdrop-blur-sm"
+                className="min-w-0 flex-1 rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-white placeholder:text-blue-200/40 backdrop-blur-sm transition-colors focus:border-blue-400 focus:outline-none"
               />
               <motion.button
+                type="button"
+                onClick={handleNewsletterSubmit}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl transition-all duration-300 shadow-lg shadow-blue-600/50"
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-3 shadow-lg shadow-blue-600/50 transition-all duration-300 hover:from-blue-500 hover:to-blue-600"
               >
-                <Mail className="w-5 h-5" />
+                <Mail className="h-5 w-5" />
               </motion.button>
             </div>
-            <p className="text-blue-200/50 text-xs">
-              Підписуючись, ти погоджуєшся з нашою політикою конфіденційності
+            <p className="text-xs text-blue-200/50">
+              Підписуючись, ти погоджуєшся з нашою політикою конфіденційності.
             </p>
           </div>
         </div>
 
         <div className="border-t border-blue-500/20 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-            <p className="text-blue-200/70">
-              © 2026 APEX GAMING. Всі права захищені.
-            </p>
+          <div className="flex flex-col items-center justify-between gap-4 text-sm md:flex-row">
+            <p className="text-blue-200/70">© 2026 APEX GAMING. Всі права захищені.</p>
             <div className="flex gap-6">
-              <a href="#" className="text-blue-200/70 hover:text-blue-400 transition-colors">
-                Політика конфіденційності
-              </a>
-              <a href="#" className="text-blue-200/70 hover:text-blue-400 transition-colors">
-                Умови використання
-              </a>
-              <a href="#" className="text-blue-200/70 hover:text-blue-400 transition-colors">
-                Cookies
-              </a>
+              {["Політика конфіденційності", "Умови використання", "Cookies"].map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={onNavigateHome}
+                  className="text-blue-200/70 transition-colors hover:text-blue-400"
+                >
+                  {item}
+                </button>
+              ))}
             </div>
           </div>
         </div>

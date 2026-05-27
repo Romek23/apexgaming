@@ -1,8 +1,9 @@
 /**
- * Tailwind CSS configuration for ApexGaming
+ * Налаштування Tailwind CSS для стилів ApexGaming.
+ * Тут задаються файли, які Tailwind перевіряє, і додаткові кольори.
  */
 
-/** @type {import('tailwindcss').Config} */
+/** Тип конфігурації Tailwind, щоб редактор краще підказував поля. */
 export default {
   content: [
     "./index.html",

@@ -13,23 +13,32 @@ type AuthPageProps = {
 
 type AuthMode = "login" | "register";
 
+// Сторінка авторизації працює у двох режимах: вхід і реєстрація.
 export function AuthPage({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
   onAuthSuccess,
 }: AuthPageProps) {
+  // mode визначає, яку форму зараз показувати користувачу.
   const [mode, setMode] = useState<AuthMode>("login");
+
+  // Поля форми зберігаються у стані, щоб React одразу бачив введені значення.
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // error показує помилку під формою, якщо користувач щось ввів неправильно.
   const [error, setError] = useState("");
+
+  // isSubmitting блокує кнопку, поки запит до сервера ще виконується.
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const title = mode === "login" ? "Увійти в профіль" : "Створити профіль";
   const submitLabel = mode === "login" ? "Увійти" : "Зареєструватися";
 
   const helperText = useMemo(() => {
+    // Текст під заголовком залежить від режиму форми.
     if (mode === "login") {
       return "Введи email і пароль. Backend перевірить, чи є такий користувач.";
     }
@@ -38,8 +47,10 @@ export function AuthPage({
   }, [mode]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    // Забороняємо браузеру перезавантажувати сторінку після submit.
     event.preventDefault();
 
+    // Очищаємо зайві пробіли і приводимо email до нижнього регістру.
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
 
@@ -62,7 +73,10 @@ export function AuthPage({
     setError("");
 
     try {
+      // Обираємо endpoint залежно від режиму форми.
       const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
+
+      // Надсилаємо дані на бекенд у форматі JSON.
       const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: "POST",
         headers: {
@@ -77,11 +91,13 @@ export function AuthPage({
 
       const data = await response.json();
 
+      // Якщо сервер повернув помилку, показуємо її користувачу.
       if (!response.ok) {
         setError(data.detail || "Не вдалося виконати запит.");
         return;
       }
 
+      // Якщо все добре, передаємо користувача і токен у App.tsx.
       onAuthSuccess(
         {
           id: data.user.id,
@@ -92,6 +108,7 @@ export function AuthPage({
         data.access_token
       );
     } catch {
+      // Сюди потрапляємо, якщо бекенд не запущений або немає з'єднання.
       setError("Backend недоступний. Перевір, чи запущений сервер.");
     } finally {
       setIsSubmitting(false);

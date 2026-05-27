@@ -39,6 +39,7 @@ type BuildIssue = {
 
 const PSU_HEADROOM_W = 150;
 
+// Для кожної категорії комплектуючих вибираємо відповідну іконку.
 const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
   cpu: Cpu,
   motherboard: Layers,
@@ -52,6 +53,7 @@ const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
 
 const formatPrice = (value: number) => `${value.toLocaleString("uk-UA")} грн`;
 
+// Перевіряє, чи сумісні вибрані комплектуючі між собою.
 function getBuildIssues(parts: SelectedParts): BuildIssue[] {
   const issues: BuildIssue[] = [];
   const cpu = parts.cpu;
@@ -63,6 +65,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
   const cooling = parts.cooling;
   const estimatedWattage = Object.values(parts).reduce((sum, part) => sum + (part?.wattage ?? 0), 0);
 
+  // Процесор і материнська плата мають мати однаковий socket.
   if (cpu?.socket && motherboard?.socket && cpu.socket !== motherboard.socket) {
     issues.push({
       id: "cpu-motherboard-socket",
@@ -73,6 +76,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
     });
   }
 
+  // Тип оперативної пам'яті має підтримуватися материнською платою.
   if (motherboard?.ramType && ram?.ramType && motherboard.ramType !== ram.ramType) {
     issues.push({
       id: "ram-type",
@@ -83,6 +87,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
     });
   }
 
+  // Формат материнської плати має підходити до корпусу.
   if (motherboard?.formFactor && pcCase?.supportedFormFactors && !pcCase.supportedFormFactors.includes(motherboard.formFactor)) {
     issues.push({
       id: "case-form-factor",
@@ -93,6 +98,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
     });
   }
 
+  // Перевіряємо, чи відеокарта фізично влізе в корпус.
   if (gpu?.gpuLengthMm && pcCase?.maxGpuLengthMm && gpu.gpuLengthMm > pcCase.maxGpuLengthMm) {
     issues.push({
       id: "gpu-length",
@@ -103,6 +109,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
     });
   }
 
+  // Охолодження має підтримувати socket вибраного процесора.
   if (cpu?.socket && cooling?.coolerSockets && !cooling.coolerSockets.includes(cpu.socket)) {
     issues.push({
       id: "cooler-socket",
@@ -113,6 +120,7 @@ function getBuildIssues(parts: SelectedParts): BuildIssue[] {
     });
   }
 
+  // Блок живлення повинен мати запас потужності.
   if (psu?.psuCapacityW) {
     const recommendedWattage = estimatedWattage + PSU_HEADROOM_W;
     if (psu.psuCapacityW < recommendedWattage) {
@@ -137,44 +145,57 @@ export function PcBuilderPage({
   onNavigateAuth,
   onNavigateProfile,
 }: PcBuilderPageProps) {
+  // activeCategory визначає, яку категорію комплектуючих користувач зараз переглядає.
   const [activeCategory, setActiveCategory] = useState<PartCategoryId>("cpu");
+
+  // selectedParts зберігає вибрані комплектуючі по категоріях.
   const [selectedParts, setSelectedParts] = useState<SelectedParts>({});
+
+  // shakingPartId потрібен для анімації, коли несумісну деталь не можна вибрати.
   const [shakingPartId, setShakingPartId] = useState<string | null>(null);
 
+  // Дані активної категорії: назва, опис та id.
   const activeCategoryInfo = partCategories.find((category) => category.id === activeCategory) ?? partCategories[0];
 
+  // Список деталей тільки для вибраної категорії.
   const activeParts = useMemo(
     () => pcParts.filter((part) => part.categoryId === activeCategory),
     [activeCategory]
   );
 
+  // Список вибраних деталей у тому ж порядку, що й категорії.
   const selectedList = useMemo(
     () => partCategories.map((category) => ({ category, part: selectedParts[category.id] })),
     [selectedParts]
   );
 
+  // Загальна ціна збірки.
   const totalPrice = useMemo(
     () => Object.values(selectedParts).reduce((sum, part) => sum + (part?.price ?? 0), 0),
     [selectedParts]
   );
 
+  // Приблизне споживання енергії всіма вибраними деталями.
   const estimatedWattage = useMemo(
     () => Object.values(selectedParts).reduce((sum, part) => sum + (part?.wattage ?? 0), 0),
     [selectedParts]
   );
 
+  // Список проблем сумісності у поточній збірці.
   const buildIssues = useMemo(() => getBuildIssues(selectedParts), [selectedParts]);
   const blockingIssues = buildIssues.filter((issue) => issue.severity === "error");
 
   const selectedCount = Object.values(selectedParts).filter(Boolean).length;
 
   const selectPart = (part: PcPart) => {
+    // Перед вибором деталі перевіряємо, чи вона не створить критичну помилку.
     const simulatedIssues = getBuildIssues({ ...selectedParts, [part.categoryId]: part });
     const blocksSelection = simulatedIssues.some(
       (issue) => issue.severity === "error" && issue.categoryIds.includes(part.categoryId)
     );
 
     if (blocksSelection) {
+      // Якщо деталь несумісна, не вибираємо її, а показуємо коротку анімацію.
       setShakingPartId(part.id);
       window.setTimeout(() => {
         setShakingPartId((current) => (current === part.id ? null : current));
@@ -182,6 +203,7 @@ export function PcBuilderPage({
       return;
     }
 
+    // Якщо проблем немає, зберігаємо деталь у відповідній категорії.
     setSelectedParts((current) => ({
       ...current,
       [part.categoryId]: part,
@@ -189,6 +211,7 @@ export function PcBuilderPage({
   };
 
   const removePart = (categoryId: PartCategoryId) => {
+    // Видаляємо вибрану деталь з конкретної категорії.
     setSelectedParts((current) => {
       const next = { ...current };
       delete next[categoryId];
@@ -197,6 +220,7 @@ export function PcBuilderPage({
   };
 
   const clearBuild = () => {
+    // Очищаємо всю збірку.
     setSelectedParts({});
   };
 

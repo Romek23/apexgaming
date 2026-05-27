@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 from app.database import Base
 
 
+# Модель User описує таблицю users у базі даних.
 class User(Base):
     __tablename__ = "users"
 

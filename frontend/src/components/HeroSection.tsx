@@ -1,112 +1,36 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
+import heroPhoto4 from "../assets/images/banners/hero-photo-4.png";
+import heroPhoto6 from "../assets/images/banners/hero-photo-6.png";
+import heroPhotoVr from "../assets/images/banners/Gaming-Computer-Virtual-Reality-Compatibility-PNG-removebg-preview.png";
+import heroPhotoPink from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
 
 const heroImages = [
-  new URL("../assets/images/banners/hero-photo-1.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-2.png", import.meta.url).href,
-  new URL("../assets/images/banners/hero-photo-3.png", import.meta.url).href,
+  { src: heroPhotoVr, color: "rgba(56,189,248,0.76)" },
+  { src: heroPhotoPink, color: "rgba(217,70,239,0.72)" },
+  { src: heroPhoto4, color: "rgba(244,63,94,0.68)" },
+  { src: heroPhoto6, color: "rgba(34,197,94,0.66)" },
 ];
 
 
-export function HeroSection() {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [glowColor, setGlowColor] = useState<string>("rgb(59,130,246)");
+type HeroSectionProps = {
+  onNavigateCatalog: () => void;
+};
 
+export function HeroSection({ onNavigateCatalog }: HeroSectionProps) {
+  const [currentImage, setCurrentImage] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const getAverageGlowFromImage = async (src: string) => {
-      // Try to compute average color from the image to match the glow.
-      // If it fails (CORS or canvas errors), keep default glow color.
-      try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = src;
-
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error("Image load failed"));
-        });
-        if (cancelled) return;
-
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return;
-
-        // Downscale for performance
-        const scale = 0.08; // smaller = faster
-        const w = Math.max(1, Math.floor(img.naturalWidth * scale));
-        const h = Math.max(1, Math.floor(img.naturalHeight * scale));
-        canvas.width = w;
-        canvas.height = h;
-
-        ctx.drawImage(img, 0, 0, w, h);
-        const { data } = ctx.getImageData(0, 0, w, h);
-
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        let count = 0;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const alpha = data[i + 3];
-          if (alpha < 10) continue;
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-          count++;
-        }
-
-        if (count === 0) return;
-        r = Math.round(r / count);
-        g = Math.round(g / count);
-        b = Math.round(b / count);
-
-        // Boost the glow brightness a bit (so it looks nice on dark background)
-        const boost = 1.35;
-        const rr = Math.min(255, Math.round(r * boost));
-        const gg = Math.min(255, Math.round(g * boost));
-        const bb = Math.min(255, Math.round(b * boost));
-
-        if (!cancelled) {
-          setGlowColor(`rgb(${rr},${gg},${bb})`);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    const loadedImages = heroImages.map((src) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = src;
-      img.onload = () => setImagesLoaded(true);
-      return img;
-    });
-
-    // Initial color sync
-    getAverageGlowFromImage(heroImages[0]);
-
     const interval = setInterval(() => {
-      setCurrentImage((prev) => {
-        const next = (prev + 1) % heroImages.length;
-        getAverageGlowFromImage(heroImages[next]);
-        return next;
-      });
-    }, 15000);
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 8000);
 
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      loadedImages.forEach((img) => {
-        img.onload = null;
-      });
-    };
+    return () => clearInterval(interval);
   }, []);
 
+  const currentHero = heroImages[currentImage];
+  const glowColor = currentHero.color;
 
   return (
     <section
@@ -116,11 +40,7 @@ export function HeroSection() {
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(37,99,235,0.15),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(59,130,246,0.1),transparent_60%)]" />
-        <motion.div
-          animate={{ opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"
-        />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16 items-center">
@@ -148,6 +68,8 @@ export function HeroSection() {
 
           <div className="flex flex-wrap gap-4">
             <motion.button
+              type="button"
+              onClick={onNavigateCatalog}
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl font-medium flex items-center gap-2 transition-all duration-300 shadow-lg shadow-blue-600/50"
@@ -157,6 +79,8 @@ export function HeroSection() {
             </motion.button>
 
             <motion.button
+              type="button"
+              onClick={onNavigateCatalog}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium backdrop-blur-sm border border-white/10 transition-all duration-300"
@@ -189,50 +113,38 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="relative"
         >
-          <motion.div
-            animate={{
-              y: [0, -20, 0],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="relative z-10 overflow-hidden rounded-[32px] bg-transparent"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`glow-${heroImages[currentImage]}`}
-                aria-hidden
-                className="pointer-events-none absolute inset-0 z-[1]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                style={{
-                  boxShadow: `0 0 0 0 rgba(0,0,0,0), 0 0 60px ${glowColor}, 0 0 120px ${glowColor}, 0 0 220px ${glowColor}`
-                }}
-              />
+          <div className="relative z-10 min-h-[360px] overflow-visible bg-transparent sm:min-h-[460px]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[82%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-90 blur-[72px] transition-colors duration-700"
+              style={{ backgroundColor: glowColor }}
+            />
 
-              <motion.img
-                key={heroImages[currentImage]}
-                src={heroImages[currentImage]}
-                alt="Gaming PC"
-                loading="eager"
-                decoding="async"
-                initial={imagesLoaded ? { opacity: 0, y: 10, scale: 0.99 } : false}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.99 }}
-                transition={{ duration: 0.65, ease: "easeOut" }}
-                className="relative z-10 w-full h-auto object-cover will-change-transform"
-                style={{
-                  filter: `blur(0px) drop-shadow(0 0 26px ${glowColor}) drop-shadow(0 0 90px ${glowColor})`,
-                }}
-              />
+            <motion.div
+              animate={{ y: [0, -16, 0] }}
+              transition={{ duration: 6.5, ease: "easeInOut", repeat: Infinity }}
+              className="relative z-10 will-change-transform"
+            >
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImage}
+                  src={currentHero.src}
+                  alt="Gaming PC"
+                  loading="eager"
+                  decoding="async"
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="mx-auto h-[360px] w-full object-contain sm:h-[460px] lg:h-[560px]"
+                  style={{
+                    filter: `drop-shadow(0 28px 42px rgba(0,0,0,0.36)) drop-shadow(0 0 54px ${glowColor})`,
+                  }}
+                />
+              </AnimatePresence>
+            </motion.div>
 
-            </AnimatePresence>
-
-          </motion.div>
+          </div>
         </motion.div>
       </div>
 

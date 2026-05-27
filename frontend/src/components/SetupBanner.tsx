@@ -1,17 +1,22 @@
 import { motion } from "motion/react";
 import { Monitor, ArrowRight } from "lucide-react";
+import setupPc from "../assets/images/banners/Gaming-Computer-Virtual-Reality-Compatibility-PNG-removebg-preview.png";
 
-export function SetupBanner() {
+type SetupBannerProps = {
+  onNavigateCatalog: () => void;
+};
+
+export function SetupBanner({ onNavigateCatalog }: SetupBannerProps) {
   return (
     <section className="py-20 bg-gradient-to-br from-[#071B3B] via-[#0A2647] to-[#071B3B] relative overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1694919123854-24b74b376da1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600')] bg-cover bg-center opacity-5" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_46%,rgba(14,165,233,0.18),transparent_42%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#071B3B] via-transparent to-[#071B3B]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.1),transparent_70%)]" />
       </div>
 
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full blur-[150px] opacity-30 animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full blur-[150px] opacity-20 animate-pulse" />
+      <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-blue-500 opacity-[0.24] blur-[96px]" />
+      <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-purple-500 opacity-[0.18] blur-[96px]" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -58,6 +63,8 @@ export function SetupBanner() {
             </div>
 
             <motion.button
+              type="button"
+              onClick={onNavigateCatalog}
               whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl font-medium flex items-center gap-2 transition-all duration-300 shadow-lg shadow-blue-600/50"
@@ -74,26 +81,18 @@ export function SetupBanner() {
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl blur-3xl opacity-30" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl blur-3xl opacity-45" />
             <div className="relative rounded-3xl overflow-hidden border border-blue-500/30 shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1694919123854-24b74b376da1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200"
+                src={setupPc}
                 alt="Gaming Setup"
-                className="w-full h-auto"
+                className="h-[420px] w-full object-contain p-6 drop-shadow-[0_0_52px_rgba(56,189,248,0.54)]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#071B3B]/50 to-transparent" />
             </div>
 
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="absolute -top-4 -right-4 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-50"
-            />
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -bottom-4 -left-4 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-50"
-            />
+            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500 opacity-45 blur-3xl" />
+            <div className="absolute -bottom-4 -left-4 h-32 w-32 rounded-full bg-purple-500 opacity-45 blur-3xl" />
           </motion.div>
         </div>
       </div>
