@@ -1,7 +1,12 @@
 import { motion } from "motion/react";
 import { Cpu, ArrowRight } from "lucide-react";
+import customBuildPc from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
 
-export function CustomBuild() {
+type CustomBuildProps = {
+  onNavigateBuilder: () => void;
+};
+
+export function CustomBuild({ onNavigateBuilder }: CustomBuildProps) {
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(37,99,235,0.05),transparent_70%)]" />
@@ -14,11 +19,11 @@ export function CustomBuild() {
           transition={{ duration: 0.8 }}
           className="relative bg-gradient-to-br from-[#071B3B] to-[#0A2647] rounded-3xl overflow-hidden shadow-2xl"
         >
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1658262530868-f7460e2f071f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600')] bg-cover bg-center opacity-10" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_42%,rgba(56,189,248,0.16),transparent_42%)]" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#071B3B] via-transparent to-[#071B3B]/80" />
 
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-[150px] opacity-20" />
-          <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-[150px] opacity-20" />
+          <div className="absolute right-1/4 top-0 h-96 w-96 rounded-full bg-blue-500 opacity-[0.18] blur-[96px]" />
+          <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-purple-500 opacity-[0.18] blur-[96px]" />
 
           <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center p-12 lg:p-16">
             <div>
@@ -59,6 +64,8 @@ export function CustomBuild() {
               </div>
 
               <motion.button
+                type="button"
+                onClick={onNavigateBuilder}
                 whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl font-medium flex items-center gap-2 transition-all duration-300 shadow-lg shadow-blue-600/50"
@@ -75,11 +82,11 @@ export function CustomBuild() {
               transition={{ delay: 0.4 }}
               className="relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-3xl opacity-30" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-3xl opacity-45" />
               <img
-                src="https://images.unsplash.com/photo-1658673934023-6005e1ff7ec2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800"
+                src={customBuildPc}
                 alt="Custom PC Build"
-                className="relative rounded-2xl shadow-2xl"
+                className="relative mx-auto max-h-[480px] w-full object-contain drop-shadow-[0_0_52px_rgba(217,70,239,0.54)]"
               />
             </motion.div>
           </div>

@@ -1,8 +1,9 @@
 /**
- * Tailwind CSS configuration for ApexGaming
+ * Налаштування Tailwind CSS для стилів ApexGaming.
+ * Тут задаються файли, які Tailwind перевіряє, і додаткові кольори.
  */
 
-/** @type {import('tailwindcss').Config} */
+/** Тип конфігурації Tailwind, щоб редактор краще підказував поля. */
 export default {
   content: [
     "./index.html",
@@ -11,7 +12,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#2563eb',
+        primary: '#3b82f6',
         secondary: '#1e40af',
         accent: '#dc2626',
       },

@@ -1,0 +1,250 @@
+import { FormEvent, useMemo, useState } from "react";
+import { motion } from "motion/react";
+import { ArrowLeft, Lock, Mail, UserRound } from "lucide-react";
+import { Header } from "./Header";
+import type { AppUser } from "../types/user";
+
+type AuthPageProps = {
+  onNavigateHome: () => void;
+  onNavigateCatalog: () => void;
+  onNavigateBuilder: () => void;
+  onAuthSuccess: (user: AppUser, token: string) => void;
+};
+
+type AuthMode = "login" | "register";
+
+// Сторінка авторизації працює у двох режимах: вхід і реєстрація.
+export function AuthPage({
+  onNavigateHome,
+  onNavigateCatalog,
+  onNavigateBuilder,
+  onAuthSuccess,
+}: AuthPageProps) {
+  // mode визначає, яку форму зараз показувати користувачу.
+  const [mode, setMode] = useState<AuthMode>("login");
+
+  // Поля форми зберігаються у стані, щоб React одразу бачив введені значення.
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // error показує помилку під формою, якщо користувач щось ввів неправильно.
+  const [error, setError] = useState("");
+
+  // isSubmitting блокує кнопку, поки запит до сервера ще виконується.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const title = mode === "login" ? "Увійти в профіль" : "Створити профіль";
+  const submitLabel = mode === "login" ? "Увійти" : "Зареєструватися";
+
+  const helperText = useMemo(() => {
+    // Текст під заголовком залежить від режиму форми.
+    if (mode === "login") {
+      return "Введи email і пароль. Backend перевірить, чи є такий користувач.";
+    }
+
+    return "Після реєстрації профіль буде збережений у базі даних.";
+  }, [mode]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    // Забороняємо браузеру перезавантажувати сторінку після submit.
+    event.preventDefault();
+
+    // Очищаємо зайві пробіли і приводимо email до нижнього регістру.
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !password.trim()) {
+      setError("Заповни email і пароль.");
+      return;
+    }
+
+    if (!cleanEmail.includes("@")) {
+      setError("Введи коректний email.");
+      return;
+    }
+
+    if (mode === "register" && !cleanName) {
+      setError("Введи ім'я для профілю.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      // Обираємо endpoint залежно від режиму форми.
+      const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
+
+      // Надсилаємо дані на бекенд у форматі JSON.
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          mode === "register"
+            ? { name: cleanName, email: cleanEmail, password }
+            : { email: cleanEmail, password }
+        ),
+      });
+
+      const data = await response.json();
+
+      // Якщо сервер повернув помилку, показуємо її користувачу.
+      if (!response.ok) {
+        setError(data.detail || "Не вдалося виконати запит.");
+        return;
+      }
+
+      // Якщо все добре, передаємо користувача і токен у App.tsx.
+      onAuthSuccess(
+        {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          avatarUrl: data.user.avatar_url ?? undefined,
+        },
+        data.access_token
+      );
+    } catch {
+      // Сюди потрапляємо, якщо бекенд не запущений або немає з'єднання.
+      setError("Backend недоступний. Перевір, чи запущений сервер.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <Header
+        onNavigateHome={onNavigateHome}
+        onNavigateCatalog={onNavigateCatalog}
+        onNavigateBuilder={onNavigateBuilder}
+      />
+
+      <main className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-28 lg:grid-cols-[0.9fr_1.1fr]">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="mb-8 inline-flex items-center gap-2 text-sm font-black text-sky-600 transition hover:text-sky-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            На головну
+          </button>
+
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-sky-500">Apex profile</p>
+          <h1 className="mt-4 max-w-xl text-5xl font-black leading-tight tracking-tight text-slate-950">
+            Особистий профіль для твоїх збірок
+          </h1>
+          <p className="mt-5 max-w-lg text-lg font-medium leading-8 text-slate-600">
+            Тут будуть збережені конфігурації, дані користувача і швидкий доступ до майбутніх замовлень.
+          </p>
+        </motion.section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.48, delay: 0.08 }}
+          className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.1)] sm:p-8"
+        >
+          <div className="mb-6 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("login");
+                setError("");
+              }}
+              className={`rounded-xl px-4 py-3 text-sm font-black transition ${
+                mode === "login" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Увійти
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("register");
+                setError("");
+              }}
+              className={`rounded-xl px-4 py-3 text-sm font-black transition ${
+                mode === "register" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Реєстрація
+            </button>
+          </div>
+
+          <div className="mb-7">
+            <h2 className="text-3xl font-black text-slate-950">{title}</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{helperText}</p>
+          </div>
+
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            {mode === "register" ? (
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">Ім'я</span>
+                <span className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-sky-400 focus-within:bg-white">
+                  <UserRound className="h-5 w-5 text-slate-400" />
+                  <input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-950 outline-none placeholder:text-slate-400"
+                    placeholder="Андрій"
+                  />
+                </span>
+              </label>
+            ) : null}
+
+            <label className="grid gap-2">
+              <span className="text-sm font-black text-slate-700">Email</span>
+              <span className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-sky-400 focus-within:bg-white">
+                <Mail className="h-5 w-5 text-slate-400" />
+                <input
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-950 outline-none placeholder:text-slate-400"
+                  placeholder="you@example.com"
+                  type="email"
+                />
+              </span>
+            </label>
+
+            <label className="grid gap-2">
+              <span className="text-sm font-black text-slate-700">Пароль</span>
+              <span className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-sky-400 focus-within:bg-white">
+                <Lock className="h-5 w-5 text-slate-400" />
+                <input
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-950 outline-none placeholder:text-slate-400"
+                  placeholder="••••••••"
+                  type="password"
+                />
+              </span>
+            </label>
+
+            {error ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Зачекай..." : submitLabel}
+            </button>
+          </form>
+        </motion.section>
+      </main>
+    </div>
+  );
+}

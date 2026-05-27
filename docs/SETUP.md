@@ -42,7 +42,7 @@ cp .env.example .env
 ### Start Backend Server
 ```bash
 python main.py
-# or
+# або
 uvicorn main:app --reload
 ```
 Server runs at: `http://localhost:8000`
@@ -56,15 +56,15 @@ docker-compose up -d postgres pgadmin
 
 ### Manual Setup
 ```bash
-# Connect to PostgreSQL
+# Підключитися до PostgreSQL
 psql -U postgres
 
-# Create database
+# Створити базу даних
 CREATE DATABASE apexgaming;
 CREATE USER apexgaming WITH PASSWORD 'apexgaming_password';
 GRANT ALL PRIVILEGES ON DATABASE apexgaming TO apexgaming;
 
-# Run schema
+# Запустити SQL-схему
 psql -U apexgaming -d apexgaming -f database/schema.sql
 ```
 
@@ -108,9 +108,9 @@ docker-compose logs -f
 
 ### Port Already in Use
 ```bash
-# Find process using port 8000
+# Знайти процес, який займає порт 8000
 netstat -ano | findstr :8000
-# Kill process
+# Зупинити процес
 taskkill /PID <PID> /F
 ```
 

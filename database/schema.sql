@@ -1,4 +1,5 @@
--- ApexGaming Database Schema
+-- Схема бази даних ApexGaming.
+-- Тут описані таблиці, які можуть зберігати користувачів, товари та замовлення.
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -40,7 +41,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for better performance
+-- Індекси прискорюють пошук користувачів і замовлень у базі.
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);

@@ -60,7 +60,7 @@ python main.py
 
 #### 3. Database
 ```bash
-# Using pgAdmin or psql
+# Через pgAdmin або psql
 createdb apexgaming
 ```
 
