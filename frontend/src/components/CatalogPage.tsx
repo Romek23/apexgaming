@@ -9,10 +9,11 @@ import {
   Phone,
   SlidersHorizontal,
   Star,
+  X,
   Zap,
 } from "lucide-react";
 import { Header } from "./Header";
-import type { AppUser } from "../types/user";
+import type { AppUser, CartCatalogItem } from "../types/user";
 
 import heroPhoto1 from "../assets/images/banners/Gaming-Computer-Virtual-Reality-Compatibility-PNG-removebg-preview.png";
 import heroPhoto2 from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
@@ -466,6 +467,16 @@ const PRICE_STEP = 1000;
 
 const formatPrice = (value: number) => `${value.toLocaleString("uk-UA")} грн`;
 
+type CatalogProduct = (typeof products)[number];
+type SortMode = "popular" | "new" | "cheap" | "expensive";
+
+const sortOptions: Array<{ label: string; value: SortMode }> = [
+  { label: "Популярні", value: "popular" },
+  { label: "Новинки", value: "new" },
+  { label: "Дешеві", value: "cheap" },
+  { label: "Дорогі", value: "expensive" },
+];
+
 function FilterGroup({
   title,
   options,
@@ -521,8 +532,12 @@ type CatalogPageProps = {
   onNavigateHome?: () => void;
   onNavigateCatalog?: () => void;
   onNavigateBuilder?: () => void;
+  onNavigateComponents?: () => void;
+  onNavigateCart?: () => void;
   onNavigateAuth?: () => void;
   onNavigateProfile?: () => void;
+  cartCount?: number;
+  onAddCatalogToCart?: (item: CartCatalogItem) => void;
 };
 
 export function CatalogPage({
@@ -530,8 +545,12 @@ export function CatalogPage({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
+  onNavigateComponents,
+  onNavigateCart,
   onNavigateAuth,
   onNavigateProfile,
+  cartCount = 0,
+  onAddCatalogToCart,
 }: CatalogPageProps) {
   // Скільки товарів показуємо на одній сторінці каталогу.
   const ITEMS_PER_PAGE = 6;
@@ -545,6 +564,9 @@ export function CatalogPage({
   // Тут зберігаються вибрані чекбокси фільтрів.
   // Ключ - назва групи, значення - набір вибраних варіантів.
   const [selectedFilters, setSelectedFilters] = useState<Record<string, Set<string>>>({});
+  const [sortMode, setSortMode] = useState<SortMode>("popular");
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+  const [cartMessage, setCartMessage] = useState("");
 
   // Початковий діапазон ціни: від найдешевшого до найдорожчого товару.
   const initialPriceRange: [number, number] = [catalogPriceBounds.min, catalogPriceBounds.max];
@@ -645,10 +667,28 @@ export function CatalogPage({
     });
   }, [priceRange, selectedFilters]);
 
+  const sortedProducts = useMemo(() => {
+    const nextProducts = [...filteredProducts];
+
+    if (sortMode === "new") {
+      return nextProducts.reverse();
+    }
+
+    if (sortMode === "cheap") {
+      return nextProducts.sort((a, b) => parseProductPrice(a.price) - parseProductPrice(b.price));
+    }
+
+    if (sortMode === "expensive") {
+      return nextProducts.sort((a, b) => parseProductPrice(b.price) - parseProductPrice(a.price));
+    }
+
+    return nextProducts;
+  }, [filteredProducts, sortMode]);
+
   const totalPages = useMemo(
     // Кількість сторінок залежить від кількості товарів після фільтрації.
-    () => Math.ceil(filteredProducts.length / ITEMS_PER_PAGE),
-    [filteredProducts.length]
+    () => Math.ceil(sortedProducts.length / ITEMS_PER_PAGE),
+    [sortedProducts.length]
   );
 
   // Навіть якщо товарів немає, залишаємо мінімум одну сторінку, щоб логіка не ламалась.
@@ -658,10 +698,37 @@ export function CatalogPage({
     // Вибираємо тільки ті товари, які мають бути видимі на поточній сторінці.
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, end);
-  }, [currentPage, filteredProducts]);
+    return sortedProducts.slice(start, end);
+  }, [currentPage, sortedProducts]);
 
-  const shouldShowPagination = filteredProducts.length > ITEMS_PER_PAGE;
+  const shouldShowPagination = sortedProducts.length > ITEMS_PER_PAGE;
+
+  const changeSortMode = (nextSortMode: SortMode) => {
+    setSortMode(nextSortMode);
+    setCurrentPage(1);
+  };
+
+  const makeCartItem = (product: CatalogProduct): CartCatalogItem => ({
+    id: product.name,
+    name: product.name,
+    price: parseProductPrice(product.price),
+    priceLabel: product.price,
+    image: product.image,
+    cpu: product.cpu,
+    gpu: product.gpu,
+    ram: product.ram,
+    ssd: product.ssd,
+  });
+
+  const addSelectedProductToCart = () => {
+    if (!selectedProduct) {
+      return;
+    }
+
+    onAddCatalogToCart?.(makeCartItem(selectedProduct));
+    setCartMessage("Товар додано до кошика.");
+    setSelectedProduct(null);
+  };
 
   const goToPage = (page: number) => {
     // Не дозволяємо перейти нижче 1 або вище останньої сторінки.
@@ -680,8 +747,11 @@ export function CatalogPage({
         onNavigateHome={onNavigateHome}
         onNavigateCatalog={onNavigateCatalog}
         onNavigateBuilder={onNavigateBuilder}
+        onNavigateComponents={onNavigateComponents}
+        onNavigateCart={onNavigateCart}
         onNavigateAuth={onNavigateAuth}
         onNavigateProfile={onNavigateProfile}
+        cartCount={cartCount}
       />
 
       <main>
@@ -834,21 +904,20 @@ export function CatalogPage({
                 <h2 className="text-2xl font-black text-slate-950">Premium Gaming PCs</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                {["Популярні", "Новинки", "Дешеві", "Дорогі"].map((sort, index) => (
+                {sortOptions.map((sort) => (
                   <button
-                    key={sort}
+                    key={sort.value}
+                    type="button"
+                    onClick={() => changeSortMode(sort.value)}
                     className={`rounded-2xl px-4 py-2.5 text-sm font-bold transition ${
-                      index === 0
+                      sortMode === sort.value
                         ? "bg-slate-950 text-white shadow-[0_18px_38px_rgba(15,23,42,0.22)]"
                         : "border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                     }`}
                   >
-                    {sort}
+                    {sort.label}
                   </button>
                 ))}
-                <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-sky-200 hover:text-sky-700">
-                  Dropdown <ChevronDown className="h-4 w-4" />
-                </button>
               </div>
             </div>
 
@@ -915,7 +984,11 @@ export function CatalogPage({
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Ціна</p>
                       <p className="text-2xl font-black text-slate-950">{product.price}</p>
                     </div>
-                    <button className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-700 px-5 py-3 text-sm font-bold text-white shadow-[0_18px_38px_rgba(14,165,233,0.28)] transition hover:shadow-[0_22px_52px_rgba(14,165,233,0.42)]">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProduct(product)}
+                      className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-700 px-5 py-3 text-sm font-bold text-white shadow-[0_18px_38px_rgba(14,165,233,0.28)] transition hover:shadow-[0_22px_52px_rgba(14,165,233,0.42)]"
+                    >
                       Детальніше
                     </button>
                   </div>
@@ -971,6 +1044,77 @@ export function CatalogPage({
             ) : null}
           </div>
         </section>
+
+        {selectedProduct ? (
+          <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/70 px-4 py-8 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-[28px] bg-white p-5 shadow-2xl"
+            >
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-sky-500">{selectedProduct.brand}</p>
+                  <h2 className="mt-1 text-3xl font-black text-slate-950">{selectedProduct.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProduct(null)}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
+                  aria-label="Закрити перегляд товару"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                <div className="relative grid min-h-[300px] place-items-center overflow-hidden rounded-[24px] bg-gradient-to-br from-slate-950 via-[#08204a] to-sky-900">
+                  <div
+                    className="absolute inset-8 rounded-full opacity-90 blur-[58px]"
+                    style={{ backgroundColor: selectedProduct.glow }}
+                  />
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="relative z-10 max-h-[330px] w-full object-contain p-5"
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Ціна</p>
+                      <p className="mt-1 text-2xl font-black text-slate-950">{selectedProduct.price}</p>
+                    </div>
+                    <div className="rounded-2xl bg-sky-50 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-500">FPS</p>
+                      <p className="mt-1 text-2xl font-black text-slate-950">{selectedProduct.fps}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 text-sm font-bold text-slate-700">
+                    <div className="rounded-2xl border border-slate-200 p-4">CPU: {selectedProduct.cpu}</div>
+                    <div className="rounded-2xl border border-slate-200 p-4">GPU: {selectedProduct.gpu}</div>
+                    <div className="rounded-2xl border border-slate-200 p-4">RAM: {selectedProduct.ram}</div>
+                    <div className="rounded-2xl border border-slate-200 p-4">SSD: {selectedProduct.ssd}</div>
+                    <div className="rounded-2xl border border-slate-200 p-4">Призначення: {selectedProduct.purpose}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addSelectedProductToCart}
+                    className="mt-5 w-full rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white transition hover:bg-sky-600"
+                  >
+                    Додати до кошика
+                  </button>
+                  {cartMessage ? (
+                    <p className="mt-3 text-center text-xs font-bold text-slate-500">{cartMessage}</p>
+                  ) : null}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
       </main>
 
       <footer className="bg-[#061a3a] px-6 py-12 text-white">

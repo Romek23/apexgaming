@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -37,3 +39,23 @@ class AuthResponse(BaseModel):
 # Дані для оновлення аватара профілю.
 class AvatarUpdate(BaseModel):
     avatar_url: str | None = None
+
+
+class SavedBuildCreate(BaseModel):
+    name: str | None = Field(default=None, max_length=120)
+    total_price: int = Field(ge=0)
+    estimated_wattage: int = Field(ge=0)
+    parts: list[dict[str, Any]]
+
+
+class SavedBuildUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class SavedBuildResponse(BaseModel):
+    id: int
+    name: str
+    total_price: int
+    estimated_wattage: int
+    parts: list[dict[str, Any]]
+    created_at: str | None = None

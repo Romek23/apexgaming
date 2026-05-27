@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import type { AppUser } from "../types/user";
 
 interface HeaderProps {
@@ -7,17 +7,20 @@ interface HeaderProps {
   onNavigateHome?: () => void;
   onNavigateCatalog?: () => void;
   onNavigateBuilder?: () => void;
+  onNavigateComponents?: () => void;
+  onNavigateCart?: () => void;
+  onNavigateAbout?: () => void;
   onNavigateAuth?: () => void;
   onNavigateProfile?: () => void;
+  cartCount?: number;
 }
 
 const navItems = [
   { label: "Головна", action: "home" },
   { label: "Каталог", action: "catalog" },
   { label: "Збірки", action: "builder" },
-  { label: "Комплектуючі", action: "catalog" },
-  { label: "Про нас", action: "home" },
-  { label: "Контакти", action: "home" },
+  { label: "Комплектуючі", action: "components" },
+  { label: "Про нас", action: "about" },
 ] as const;
 
 // Маленький аватар у шапці: або завантажена картинка, або перша літера імені.
@@ -44,13 +47,19 @@ export function Header({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
+  onNavigateComponents,
+  onNavigateCart,
+  onNavigateAbout,
   onNavigateAuth,
   onNavigateProfile,
+  cartCount = 0,
 }: HeaderProps) {
   // Перетворює пункт меню на виклик потрібної функції переходу.
   const handleNavigation = (action: (typeof navItems)[number]["action"]) => {
     if (action === "catalog") onNavigateCatalog?.();
     else if (action === "builder") onNavigateBuilder?.();
+    else if (action === "components") onNavigateComponents?.();
+    else if (action === "about") onNavigateAbout?.();
     else onNavigateHome?.();
   };
 
@@ -97,29 +106,21 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Кнопка пошуку поки що тільки елемент інтерфейсу без логіки. */}
+          {/* Кнопка кошика відкриває сторінку з доданими товарами. */}
           <motion.button
             type="button"
-            onClick={() => onNavigateCatalog?.()}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            aria-label="Перейти до каталогу для пошуку товарів"
-            className="rounded-xl p-2.5 transition-all duration-300 hover:bg-gray-100"
-          >
-            <Search className="h-5 w-5 text-gray-700" />
-          </motion.button>
-
-          {/* Кошик поки що візуальний, його логіку можна додати пізніше. */}
-          <motion.button
-            type="button"
-            onClick={() => onNavigateCatalog?.()}
+            onClick={() => onNavigateCart?.()}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             aria-label="Перейти до каталогу для вибору товарів"
             className="relative rounded-xl p-2.5 transition-all duration-300 hover:bg-gray-100"
           >
             <ShoppingCart className="h-5 w-5 text-gray-700" />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-600" />
+            {cartCount > 0 ? (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-black text-white">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            ) : null}
           </motion.button>
 
           {/* Кнопка профілю показує іконку або ім'я користувача. */}

@@ -1,27 +1,48 @@
 import { motion } from "motion/react";
 import { Globe, Mail, MessageCircle, Share2, Video } from "lucide-react";
 
+export type AboutSectionId = "about" | "delivery" | "warranty" | "returns" | "faq" | "contacts";
+
 type FooterProps = {
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;
   onNavigateBuilder: () => void;
+  onNavigateComponents?: () => void;
+  onNavigateAboutSection?: (section: AboutSectionId) => void;
 };
 
 const navigationItems = [
   { label: "Головна", action: "home" },
   { label: "Каталог", action: "catalog" },
   { label: "Збірки", action: "builder" },
-  { label: "Комплектуючі", action: "catalog" },
-  { label: "Про нас", action: "home" },
+  { label: "Комплектуючі", action: "components" },
+  { label: "Про нас", action: "about" },
 ] as const;
 
-const supportItems = ["Доставка та оплата", "Гарантія", "Повернення", "FAQ", "Контакти"];
+const supportItems: Array<{ label: string; section: AboutSectionId }> = [
+  { label: "Доставка та оплата", section: "delivery" },
+  { label: "Гарантія", section: "warranty" },
+  { label: "Повернення", section: "returns" },
+  { label: "FAQ", section: "faq" },
+  { label: "Контакти", section: "contacts" },
+];
 
-export function Footer({ onNavigateHome, onNavigateCatalog, onNavigateBuilder }: FooterProps) {
+export function Footer({ onNavigateHome, onNavigateCatalog, onNavigateBuilder, onNavigateComponents, onNavigateAboutSection }: FooterProps) {
   const handleNavigation = (action: (typeof navigationItems)[number]["action"]) => {
     if (action === "catalog") onNavigateCatalog();
     else if (action === "builder") onNavigateBuilder();
+    else if (action === "components") onNavigateComponents?.();
+    else if (action === "about") onNavigateAboutSection?.("about");
     else onNavigateHome();
+  };
+
+  const handleSupportNavigation = (section: AboutSectionId) => {
+    if (onNavigateAboutSection) {
+      onNavigateAboutSection(section);
+      return;
+    }
+
+    onNavigateHome();
   };
 
   const handleNewsletterSubmit = () => {
@@ -83,13 +104,13 @@ export function Footer({ onNavigateHome, onNavigateCatalog, onNavigateBuilder }:
             <h4 className="mb-4 font-bold text-white">Підтримка</h4>
             <ul className="space-y-3">
               {supportItems.map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <button
                     type="button"
-                    onClick={onNavigateHome}
+                    onClick={() => handleSupportNavigation(item.section)}
                     className="inline-block text-blue-200/70 transition-colors duration-300 hover:translate-x-1 hover:text-blue-400"
                   >
-                    {item}
+                    {item.label}
                   </button>
                 </li>
               ))}
@@ -126,12 +147,12 @@ export function Footer({ onNavigateHome, onNavigateCatalog, onNavigateBuilder }:
         <div className="border-t border-blue-500/20 pt-8">
           <div className="flex flex-col items-center justify-between gap-4 text-sm md:flex-row">
             <p className="text-blue-200/70">© 2026 APEX GAMING. Всі права захищені.</p>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               {["Політика конфіденційності", "Умови використання", "Cookies"].map((item) => (
                 <button
                   key={item}
                   type="button"
-                  onClick={onNavigateHome}
+                  onClick={() => handleSupportNavigation("faq")}
                   className="text-blue-200/70 transition-colors hover:text-blue-400"
                 >
                   {item}

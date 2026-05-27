@@ -18,13 +18,19 @@ import { partCategories, pcParts, type PartCategoryId, type PcPart } from "../da
 import builderHeroPc from "../assets/images/banners/vecteezy_modern-gaming-pc-isolated-on-transparent_48412781-removebg-preview.png";
 import type { AppUser } from "../types/user";
 
+const TOKEN_STORAGE_KEY = "apexgaming:token";
+
 type PcBuilderPageProps = {
   user?: AppUser | null;
   onNavigateHome?: () => void;
   onNavigateCatalog?: () => void;
   onNavigateBuilder?: () => void;
+  onNavigateComponents?: () => void;
+  onNavigateCart?: () => void;
   onNavigateAuth?: () => void;
   onNavigateProfile?: () => void;
+  cartCount?: number;
+  onSessionExpired?: () => void;
 };
 
 type SelectedParts = Partial<Record<PartCategoryId, PcPart>>;
@@ -142,8 +148,12 @@ export function PcBuilderPage({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
+  onNavigateComponents,
+  onNavigateCart,
   onNavigateAuth,
   onNavigateProfile,
+  cartCount = 0,
+  onSessionExpired,
 }: PcBuilderPageProps) {
   // activeCategory визначає, яку категорію комплектуючих користувач зараз переглядає.
   const [activeCategory, setActiveCategory] = useState<PartCategoryId>("cpu");
@@ -153,6 +163,8 @@ export function PcBuilderPage({
 
   // shakingPartId потрібен для анімації, коли несумісну деталь не можна вибрати.
   const [shakingPartId, setShakingPartId] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Дані активної категорії: назва, опис та id.
   const activeCategoryInfo = partCategories.find((category) => category.id === activeCategory) ?? partCategories[0];
@@ -222,6 +234,79 @@ export function PcBuilderPage({
   const clearBuild = () => {
     // Очищаємо всю збірку.
     setSelectedParts({});
+    setSaveMessage("");
+  };
+
+  const saveBuild = async () => {
+    if (!user) {
+      setSaveMessage("Увійди в акаунт, щоб зберегти збірку.");
+      onNavigateAuth?.();
+      return;
+    }
+
+    if (selectedCount === 0) {
+      setSaveMessage("Спочатку обери хоча б одну комплектуючу.");
+      return;
+    }
+
+    if (blockingIssues.length) {
+      setSaveMessage("Спочатку виправ несумісні комплектуючі.");
+      return;
+    }
+
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!token) {
+      setSaveMessage("Сесія не знайдена. Увійди ще раз.");
+      onNavigateAuth?.();
+      return;
+    }
+
+    const parts = selectedList
+      .filter(({ part }) => Boolean(part))
+      .map(({ category, part }) => ({
+        categoryId: category.id,
+        categoryLabel: category.label,
+        partName: part!.name,
+        brand: part!.brand,
+        price: part!.price,
+        specs: part!.specs,
+      }));
+
+    setIsSaving(true);
+    setSaveMessage("");
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/builds`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          total_price: totalPrice,
+          estimated_wattage: estimatedWattage,
+          parts,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+          setSaveMessage("Сесія застаріла. Увійди ще раз і збережи збірку повторно.");
+          onSessionExpired?.();
+          return;
+        }
+
+        setSaveMessage("Не вдалося зберегти збірку.");
+        return;
+      }
+
+      setSaveMessage("Збірку збережено в профілі.");
+    } catch {
+      setSaveMessage("Backend недоступний. Перевір, чи сервер запущений.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -231,8 +316,11 @@ export function PcBuilderPage({
         onNavigateHome={onNavigateHome}
         onNavigateCatalog={onNavigateCatalog}
         onNavigateBuilder={onNavigateBuilder}
+        onNavigateComponents={onNavigateComponents}
+        onNavigateCart={onNavigateCart}
         onNavigateAuth={onNavigateAuth}
         onNavigateProfile={onNavigateProfile}
+        cartCount={cartCount}
       />
 
       <main>
@@ -504,10 +592,15 @@ export function PcBuilderPage({
 
               <button
                 type="button"
+                onClick={saveBuild}
+                disabled={isSaving}
                 className="mt-5 w-full rounded-2xl bg-gradient-to-r from-sky-500 to-blue-700 px-5 py-4 text-sm font-black text-white shadow-[0_18px_38px_rgba(14,165,233,0.28)] transition hover:shadow-[0_22px_52px_rgba(14,165,233,0.42)]"
               >
-                Зберегти збірку
+                {isSaving ? "Зберігаємо..." : "Зберегти збірку"}
               </button>
+              {saveMessage ? (
+                <p className="mt-3 text-center text-xs font-bold text-slate-500">{saveMessage}</p>
+              ) : null}
             </div>
           </aside>
         </section>
