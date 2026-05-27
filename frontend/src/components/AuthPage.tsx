@@ -8,6 +8,9 @@ type AuthPageProps = {
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;
   onNavigateBuilder: () => void;
+  onNavigateComponents: () => void;
+  onNavigateCart: () => void;
+  cartCount: number;
   onAuthSuccess: (user: AppUser, token: string) => void;
 };
 
@@ -18,6 +21,9 @@ export function AuthPage({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
+  onNavigateComponents,
+  onNavigateCart,
+  cartCount,
   onAuthSuccess,
 }: AuthPageProps) {
   // mode визначає, яку форму зараз показувати користувачу.
@@ -121,6 +127,9 @@ export function AuthPage({
         onNavigateHome={onNavigateHome}
         onNavigateCatalog={onNavigateCatalog}
         onNavigateBuilder={onNavigateBuilder}
+        onNavigateComponents={onNavigateComponents}
+        onNavigateCart={onNavigateCart}
+        cartCount={cartCount}
       />
 
       <main className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-28 lg:grid-cols-[0.9fr_1.1fr]">

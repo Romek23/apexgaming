@@ -1,16 +1,22 @@
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Bookmark, Camera, LogOut, Mail, UserRound, Wrench } from "lucide-react";
+import { Bookmark, Camera, Check, LogOut, Mail, Pencil, ShoppingCart, UserRound, Wrench } from "lucide-react";
 import { Header } from "./Header";
-import type { AppUser } from "../types/user";
+import type { AppUser, CartBuildItem, SavedBuild } from "../types/user";
+
+const TOKEN_STORAGE_KEY = "apexgaming:token";
 
 type ProfilePageProps = {
   user: AppUser;
   onNavigateHome: () => void;
   onNavigateCatalog: () => void;
   onNavigateBuilder: () => void;
+  onNavigateComponents: () => void;
+  onNavigateCart: () => void;
+  cartCount: number;
   onUpdateUser: (user: AppUser) => void;
   onLogout: () => void;
+  onAddBuildToCart: (item: CartBuildItem) => void;
 };
 
 const AVATAR_SIZE = 320;
@@ -66,14 +72,144 @@ export function ProfilePage({
   onNavigateHome,
   onNavigateCatalog,
   onNavigateBuilder,
+  onNavigateComponents,
+  onNavigateCart,
+  cartCount,
   onUpdateUser,
   onLogout,
+  onAddBuildToCart,
 }: ProfilePageProps) {
   // ref дозволяє відкрити прихований input для вибору файлу по кліку на кнопку.
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Повідомлення після додавання або видалення аватара.
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
+  const [buildsMessage, setBuildsMessage] = useState("");
+  const [editingBuildId, setEditingBuildId] = useState<number | null>(null);
+  const [draftBuildName, setDraftBuildName] = useState("");
+
+  useEffect(() => {
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!token) {
+      return;
+    }
+
+    const loadBuilds = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/builds`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          setBuildsMessage("Не вдалося завантажити збережені збірки.");
+          return;
+        }
+
+        const data = await response.json();
+        setSavedBuilds(
+          data.map((build: any) => ({
+            id: build.id,
+            name: build.name,
+            totalPrice: build.total_price,
+            estimatedWattage: build.estimated_wattage,
+            parts: build.parts,
+            createdAt: build.created_at,
+          }))
+        );
+      } catch {
+        setBuildsMessage("Backend недоступний. Збірки не завантажено.");
+      }
+    };
+
+    loadBuilds();
+  }, []);
+
+  const removeSavedBuild = async (buildId: number) => {
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!token) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/builds/${buildId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        setBuildsMessage("Не вдалося видалити збірку.");
+        return;
+      }
+
+      setSavedBuilds((current) => current.filter((build) => build.id !== buildId));
+      setBuildsMessage("Збірку видалено.");
+    } catch {
+      setBuildsMessage("Backend недоступний. Не вдалося видалити збірку.");
+    }
+  };
+
+  const startRenameBuild = (build: SavedBuild) => {
+    setEditingBuildId(build.id);
+    setDraftBuildName(build.name);
+    setBuildsMessage("");
+  };
+
+  const saveBuildName = async (buildId: number) => {
+    const nextName = draftBuildName.trim();
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+
+    if (!nextName) {
+      setBuildsMessage("Назва збірки не може бути порожньою.");
+      return;
+    }
+
+    if (!token) {
+      setBuildsMessage("Сесія не знайдена. Увійди ще раз.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/builds/${buildId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: nextName }),
+      });
+
+      if (!response.ok) {
+        setBuildsMessage("Не вдалося перейменувати збірку.");
+        return;
+      }
+
+      const updatedBuild = await response.json();
+      setSavedBuilds((current) =>
+        current.map((build) => (build.id === buildId ? { ...build, name: updatedBuild.name } : build))
+      );
+      setEditingBuildId(null);
+      setDraftBuildName("");
+      setBuildsMessage("Назву збірки оновлено.");
+    } catch {
+      setBuildsMessage("Backend недоступний. Не вдалося перейменувати збірку.");
+    }
+  };
+
+  const addBuildToCart = (build: SavedBuild) => {
+    onAddBuildToCart({
+      id: build.id,
+      name: build.name,
+      totalPrice: build.totalPrice,
+      estimatedWattage: build.estimatedWattage,
+      parts: build.parts,
+    });
+    setBuildsMessage("Збірку додано до кошика.");
+  };
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
     // Беремо перший вибраний файл.
@@ -109,6 +245,9 @@ export function ProfilePage({
         onNavigateHome={onNavigateHome}
         onNavigateCatalog={onNavigateCatalog}
         onNavigateBuilder={onNavigateBuilder}
+        onNavigateComponents={onNavigateComponents}
+        onNavigateCart={onNavigateCart}
+        cartCount={cartCount}
       />
 
       <main className="mx-auto max-w-6xl px-6 py-28">
@@ -216,20 +355,93 @@ export function ProfilePage({
                 <Bookmark className="h-6 w-6 text-sky-500" />
               </div>
 
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                <p className="text-base font-black text-slate-800">Поки що збережених збірок немає.</p>
-                <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">
-                  На наступному етапі кнопка збереження на сторінці збірки буде додавати конфігурації сюди.
-                </p>
-                <button
-                  type="button"
-                  onClick={onNavigateBuilder}
-                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-600"
-                >
-                  <Wrench className="h-4 w-4" />
-                  Перейти до збірки
-                </button>
-              </div>
+              {savedBuilds.length ? (
+                <div className="grid gap-4">
+                  {savedBuilds.map((build) => (
+                    <article key={build.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                        <div className="min-w-0 flex-1">
+                          {editingBuildId === build.id ? (
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <input
+                                value={draftBuildName}
+                                onChange={(event) => setDraftBuildName(event.target.value)}
+                                className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none transition focus:border-sky-400"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => saveBuildName(build.id)}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-black text-white transition hover:bg-sky-600"
+                              >
+                                <Check className="h-4 w-4" />
+                                Зберегти
+                              </button>
+                            </div>
+                          ) : (
+                            <h3 className="text-lg font-black text-slate-950">{build.name}</h3>
+                          )}
+                          <p className="mt-1 text-sm font-bold text-slate-500">
+                            {build.totalPrice.toLocaleString("uk-UA")} грн · {build.estimatedWattage}W
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => addBuildToCart(build)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs font-black text-sky-700 transition hover:bg-sky-50"
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                            До кошика
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => startRenameBuild(build)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 transition hover:bg-slate-100"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Назва
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSavedBuild(build.id)}
+                            className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50"
+                          >
+                            Видалити
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-2">
+                        {build.parts.map((part) => (
+                          <div key={`${build.id}-${part.categoryId}`} className="rounded-xl bg-white px-3 py-2 text-sm">
+                            <span className="font-black text-slate-700">{part.categoryLabel}: </span>
+                            <span className="font-semibold text-slate-600">{part.partName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                  <p className="text-base font-black text-slate-800">Поки що збережених збірок немає.</p>
+                  <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">
+                    Перейди до конструктора, обери комплектуючі та натисни “Зберегти збірку”.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onNavigateBuilder}
+                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-600"
+                  >
+                    <Wrench className="h-4 w-4" />
+                    Перейти до збірки
+                  </button>
+                </div>
+              )}
+
+              {buildsMessage ? (
+                <p className="mt-4 text-sm font-bold text-slate-500">{buildsMessage}</p>
+              ) : null}
             </div>
           </motion.section>
         </div>
