@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ShoppingCart, User } from "lucide-react";
+import { Moon, ShoppingCart, Sun, User } from "lucide-react";
 import type { AppUser } from "../types/user";
 
 interface HeaderProps {
@@ -23,7 +24,17 @@ const navItems = [
   { label: "Про нас", action: "about" },
 ] as const;
 
-// Маленький аватар у шапці: або завантажена картинка, або перша літера імені.
+const THEME_STORAGE_KEY = "apexgaming:theme";
+type ThemeMode = "light" | "dark";
+
+function getInitialTheme(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+}
+
 function ProfileAvatar({ user }: { user: AppUser }) {
   if (user.avatarUrl) {
     return (
@@ -54,7 +65,14 @@ export function Header({
   onNavigateProfile,
   cartCount = 0,
 }: HeaderProps) {
-  // Перетворює пункт меню на виклик потрібної функції переходу.
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
   const handleNavigation = (action: (typeof navItems)[number]["action"]) => {
     if (action === "catalog") onNavigateCatalog?.();
     else if (action === "builder") onNavigateBuilder?.();
@@ -64,9 +82,12 @@ export function Header({
   };
 
   const handleProfileClick = () => {
-    // Якщо користувач увійшов, відкриваємо профіль. Якщо ні - сторінку входу.
     if (user) onNavigateProfile?.();
     else onNavigateAuth?.();
+  };
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   };
 
   return (
@@ -84,13 +105,11 @@ export function Header({
             onClick={() => onNavigateHome?.()}
             className="cursor-pointer text-xl tracking-tight"
           >
-            {/* Логотип також працює як кнопка переходу на головну. */}
             <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text font-bold text-transparent">APEX</span>
             <span className="font-light text-gray-900">GAMING</span>
           </motion.button>
 
           <div className="hidden items-center gap-8 lg:flex">
-            {/* Основна навігація для великих екранів. */}
             {navItems.map((item) => (
               <button
                 key={item.label}
@@ -106,13 +125,12 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Кнопка кошика відкриває сторінку з доданими товарами. */}
           <motion.button
             type="button"
             onClick={() => onNavigateCart?.()}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            aria-label="Перейти до каталогу для вибору товарів"
+            aria-label="Перейти до кошика"
             className="relative rounded-xl p-2.5 transition-all duration-300 hover:bg-gray-100"
           >
             <ShoppingCart className="h-5 w-5 text-gray-700" />
@@ -123,7 +141,18 @@ export function Header({
             ) : null}
           </motion.button>
 
-          {/* Кнопка профілю показує іконку або ім'я користувача. */}
+          <motion.button
+            type="button"
+            onClick={toggleTheme}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            aria-label={theme === "dark" ? "Увімкнути світлу тему" : "Увімкнути темну тему"}
+            title={theme === "dark" ? "Світла тема" : "Темна тема"}
+            className="grid h-10 w-10 place-items-center rounded-xl text-gray-700 transition-all duration-300 hover:bg-gray-100"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </motion.button>
+
           <motion.button
             type="button"
             whileHover={{ scale: 1.1 }}
