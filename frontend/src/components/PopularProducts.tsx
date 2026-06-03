@@ -52,7 +52,7 @@ type PopularProductsProps = {
 
 export function PopularProducts({ onNavigateCatalog }: PopularProductsProps) {
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+    <section className="dark-gradient-section py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.03),transparent_70%)]" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -65,7 +65,7 @@ export function PopularProducts({ onNavigateCatalog }: PopularProductsProps) {
         >
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
             Популярні
-            <span className="block bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            <span className="dark-title-gradient block bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               збірки
             </span>
           </h2>

@@ -8,7 +8,7 @@ type CustomBuildProps = {
 
 export function CustomBuild({ onNavigateBuilder }: CustomBuildProps) {
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
+    <section className="dark-gradient-section py-20 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(37,99,235,0.05),transparent_70%)]" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">

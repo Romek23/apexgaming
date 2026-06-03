@@ -148,7 +148,7 @@ export function HeroSection({ onNavigateCatalog }: HeroSectionProps) {
         </motion.div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+      <div className="dark-edge-fade absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
 }

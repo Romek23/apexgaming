@@ -326,7 +326,7 @@ export function PcBuilderPage({
       <main>
         <section className="relative overflow-hidden bg-[#061a3a] pt-20 text-white">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(14,165,233,0.34),transparent_34%),radial-gradient(circle_at_20%_45%,rgba(59,130,246,0.22),transparent_32%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
+          <div className="dark-edge-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr]">
             <motion.div

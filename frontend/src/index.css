@@ -168,22 +168,16 @@ body {
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42) !important;
 }
 
-:root[data-theme='dark'] .from-white,
-:root[data-theme='dark'] .from-gray-50 {
-  --tw-gradient-from: #2563eb var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgba(37, 99, 235, 0) var(--tw-gradient-to-position) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+:root[data-theme='dark'] .dark-gradient-section {
+  background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.34), var(--apex-dark-bg) 58%, #020617) !important;
 }
 
-:root[data-theme='dark'] .to-white,
-:root[data-theme='dark'] .to-gray-50 {
-  --tw-gradient-to: var(--apex-dark-bg) var(--tw-gradient-to-position) !important;
+:root[data-theme='dark'] .dark-edge-fade {
+  background-image: linear-gradient(to top, var(--apex-dark-bg), rgba(3, 7, 18, 0)) !important;
 }
 
-:root[data-theme='dark'] .via-white,
-:root[data-theme='dark'] .via-gray-50 {
-  --tw-gradient-to: rgba(37, 99, 235, 0) var(--tw-gradient-to-position) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), rgba(37, 99, 235, 0.34) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+:root[data-theme='dark'] .dark-title-gradient {
+  background-image: linear-gradient(90deg, #7dd3fc, #38bdf8, #60a5fa) !important;
 }
 
 :root[data-theme='dark'] input,
