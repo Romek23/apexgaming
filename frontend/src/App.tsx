@@ -1,6 +1,5 @@
 import { CatalogPage } from './components/CatalogPage'
 import { Advantages } from './components/Advantages'
-import { CustomBuild } from './components/CustomBuild'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
@@ -67,9 +66,6 @@ function HomePage({
 
       {/* Переваги магазину: доставка, гарантія, підтримка. */}
       <Advantages />
-
-      {/* Блок про індивідуальну збірку ПК під потреби клієнта. */}
-      <CustomBuild onNavigateBuilder={onNavigateBuilder} />
 
       {/* Додатковий рекламний банер із сетапом. */}
       <SetupBanner onNavigateCatalog={onNavigateCatalog} />
@@ -478,6 +474,3 @@ export default function App() {
     </>
   )
 }
-
-
-
