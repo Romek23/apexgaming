@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Box, ChevronDown, Cpu, Fan, HardDrive, Layers, Monitor, SlidersHorizontal, X, Zap } from "lucide-react";
+import { Box, ChevronDown, Cpu, Fan, HardDrive, Keyboard, Layers, Monitor, Mouse, SlidersHorizontal, Speaker, X, Zap } from "lucide-react";
 import { Header } from "./Header";
 import { Footer, type AboutSectionId } from "./Footer";
 import { partCategories, pcParts, type PartCategoryId, type PcPart } from "../data/pcBuilderData";
+import { peripheralProducts, type PeripheralCategoryId, type PeripheralProduct } from "../data/peripheralsData";
 import type { AppUser, CartComponentItem } from "../types/user";
 
 type ComponentsPageProps = {
@@ -22,7 +23,8 @@ type ComponentsPageProps = {
 
 type SortMode = "popular" | "cheap" | "expensive" | "wattage";
 type FilterGroupId = "category" | "peripheral" | "brand" | "price";
-type PeripheralCategoryId = "monitor" | "mouse" | "keyboard" | "speaker";
+type InventoryItem = PcPart | PeripheralProduct;
+type InventoryCategoryId = PartCategoryId | PeripheralCategoryId;
 
 const peripheralCategories: Array<{ id: PeripheralCategoryId; label: string }> = [
   { id: "monitor", label: "Монітори" },
@@ -31,7 +33,7 @@ const peripheralCategories: Array<{ id: PeripheralCategoryId; label: string }> =
   { id: "speaker", label: "Колонки" },
 ];
 
-const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
+const categoryIcons: Record<InventoryCategoryId, typeof Cpu> = {
   cpu: Cpu,
   motherboard: Layers,
   gpu: Monitor,
@@ -40,6 +42,10 @@ const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
   psu: Zap,
   case: Box,
   cooling: Fan,
+  monitor: Monitor,
+  mouse: Mouse,
+  keyboard: Keyboard,
+  speaker: Speaker,
 };
 
 const sortOptions: Array<{ label: string; value: SortMode }> = [
@@ -50,14 +56,19 @@ const sortOptions: Array<{ label: string; value: SortMode }> = [
 ];
 
 const formatPrice = (value: number) => `${value.toLocaleString("uk-UA")} грн`;
-const minPrice = Math.min(...pcParts.map((part) => part.price));
-const maxPrice = Math.max(...pcParts.map((part) => part.price));
+const allProducts: InventoryItem[] = [...pcParts, ...peripheralProducts];
+const minPrice = Math.min(...allProducts.map((part) => part.price));
+const maxPrice = Math.max(...allProducts.map((part) => part.price));
 
-function getCategoryLabel(categoryId: PartCategoryId) {
-  return partCategories.find((category) => category.id === categoryId)?.label ?? categoryId;
+function getCategoryLabel(categoryId: InventoryCategoryId) {
+  return (
+    partCategories.find((category) => category.id === categoryId)?.label ??
+    peripheralCategories.find((category) => category.id === categoryId)?.label ??
+    categoryId
+  );
 }
 
-function makeCartItem(part: PcPart): CartComponentItem {
+function makeCartItem(part: InventoryItem): CartComponentItem {
   return {
     id: part.id,
     categoryId: part.categoryId,
@@ -88,11 +99,11 @@ export function ComponentsPage({
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
   const [sortMode, setSortMode] = useState<SortMode>("popular");
-  const [selectedPart, setSelectedPart] = useState<PcPart | null>(null);
+  const [selectedPart, setSelectedPart] = useState<InventoryItem | null>(null);
   const [message, setMessage] = useState("");
   const [openFilterGroup, setOpenFilterGroup] = useState<FilterGroupId | null>("category");
 
-  const brands = useMemo(() => [...new Set(pcParts.map((part) => part.brand))].sort(), []);
+  const brands = useMemo(() => [...new Set(allProducts.map((part) => part.brand))].sort(), []);
 
   const toggleFilterGroup = (group: FilterGroupId) => {
     setOpenFilterGroup((current) => (current === group ? null : group));
@@ -126,14 +137,16 @@ export function ComponentsPage({
   };
 
   const visibleParts = useMemo(() => {
-    const filtered = pcParts.filter((part) => {
-      const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(part.categoryId);
-      // Peripheral inventory will be added separately. Until then, selecting a
-      // peripheral category correctly excludes PC components from the results.
-      const matchesPeripheral = selectedPeripheralCategories.size === 0;
+    const selectedProductCategories = new Set<string>([
+      ...selectedCategories,
+      ...selectedPeripheralCategories,
+    ]);
+
+    const filtered = allProducts.filter((part) => {
+      const matchesCategory = selectedProductCategories.size === 0 || selectedProductCategories.has(part.categoryId);
       const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(part.brand);
       const matchesPrice = part.price >= priceRange[0] && part.price <= priceRange[1];
-      return matchesCategory && matchesPeripheral && matchesBrand && matchesPrice;
+      return matchesCategory && matchesBrand && matchesPrice;
     });
 
     if (sortMode === "cheap") return [...filtered].sort((a, b) => a.price - b.price);
@@ -142,9 +155,9 @@ export function ComponentsPage({
     return filtered;
   }, [priceRange, selectedBrands, selectedCategories, selectedPeripheralCategories, sortMode]);
 
-  const addToCart = (part: PcPart) => {
+  const addToCart = (part: InventoryItem) => {
     onAddComponentToCart(makeCartItem(part));
-    setMessage("Комплектуючу додано до кошика.");
+    setMessage("Товар додано до кошика.");
     setSelectedPart(null);
   };
 
@@ -315,7 +328,7 @@ export function ComponentsPage({
             <div className="mb-5 flex flex-col justify-between gap-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.06)] sm:flex-row sm:items-center">
               <div>
                 <p className="text-sm font-semibold text-slate-500">Знайдено {visibleParts.length} товарів</p>
-                <h2 className="text-2xl font-black text-slate-950">Усі комплектуючі</h2>
+                <h2 className="text-2xl font-black text-slate-950">Усі товари</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {sortOptions.map((option) => (
@@ -417,7 +430,9 @@ export function ComponentsPage({
                 </div>
                 <div>
                   <p className="text-3xl font-black text-slate-950">{formatPrice(selectedPart.price)}</p>
-                  <p className="mt-1 text-sm font-bold text-slate-500">{selectedPart.brand} · {selectedPart.wattage}W</p>
+                  <p className="mt-1 text-sm font-bold text-slate-500">
+                    {selectedPart.wattage > 0 ? `${selectedPart.brand} · ${selectedPart.wattage}W` : selectedPart.brand}
+                  </p>
                   <div className="mt-4 grid gap-2">
                     {selectedPart.specs.map((spec) => (
                       <div key={spec} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600">

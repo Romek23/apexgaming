@@ -1,4 +1,4 @@
-import { Box, Cpu, Fan, HardDrive, Layers, Monitor, Trash2, Zap } from "lucide-react";
+import { Box, Cpu, Fan, HardDrive, Keyboard, Layers, Monitor, Mouse, Speaker, Trash2, Zap } from "lucide-react";
 import { Header } from "./Header";
 import type { AppCart, AppUser } from "../types/user";
 
@@ -29,6 +29,10 @@ const componentIcons: Record<string, typeof Cpu> = {
   psu: Zap,
   case: Box,
   cooling: Fan,
+  monitor: Monitor,
+  mouse: Mouse,
+  keyboard: Keyboard,
+  speaker: Speaker,
 };
 
 export function CartPage({
