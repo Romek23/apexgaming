@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Box, ChevronDown, Cpu, Fan, HardDrive, Layers, Monitor, SlidersHorizontal, X, Zap } from "lucide-react";
+import { Box, ChevronDown, Cpu, Fan, HardDrive, Keyboard, Layers, Monitor, Mouse, SlidersHorizontal, Speaker, X, Zap } from "lucide-react";
 import { Header } from "./Header";
 import { Footer, type AboutSectionId } from "./Footer";
 import { partCategories, pcParts, type PartCategoryId, type PcPart } from "../data/pcBuilderData";
@@ -21,7 +21,15 @@ type ComponentsPageProps = {
 };
 
 type SortMode = "popular" | "cheap" | "expensive" | "wattage";
-type FilterGroupId = "category" | "brand" | "price";
+type FilterGroupId = "category" | "peripheral" | "brand" | "price";
+type PeripheralCategoryId = "monitor" | "mouse" | "keyboard" | "speaker";
+
+const peripheralCategories: Array<{ id: PeripheralCategoryId; label: string; icon: typeof Monitor }> = [
+  { id: "monitor", label: "Монітори", icon: Monitor },
+  { id: "mouse", label: "Мишки", icon: Mouse },
+  { id: "keyboard", label: "Клавіатури", icon: Keyboard },
+  { id: "speaker", label: "Колонки", icon: Speaker },
+];
 
 const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
   cpu: Cpu,
@@ -76,6 +84,7 @@ export function ComponentsPage({
   onAddComponentToCart,
 }: ComponentsPageProps) {
   const [selectedCategories, setSelectedCategories] = useState<Set<PartCategoryId>>(new Set());
+  const [selectedPeripheralCategories, setSelectedPeripheralCategories] = useState<Set<PeripheralCategoryId>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
   const [sortMode, setSortMode] = useState<SortMode>("popular");
@@ -107,19 +116,31 @@ export function ComponentsPage({
     });
   };
 
+  const togglePeripheralCategory = (categoryId: PeripheralCategoryId) => {
+    setSelectedPeripheralCategories((current) => {
+      const next = new Set(current);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  };
+
   const visibleParts = useMemo(() => {
     const filtered = pcParts.filter((part) => {
       const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(part.categoryId);
+      // Peripheral inventory will be added separately. Until then, selecting a
+      // peripheral category correctly excludes PC components from the results.
+      const matchesPeripheral = selectedPeripheralCategories.size === 0;
       const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(part.brand);
       const matchesPrice = part.price >= priceRange[0] && part.price <= priceRange[1];
-      return matchesCategory && matchesBrand && matchesPrice;
+      return matchesCategory && matchesPeripheral && matchesBrand && matchesPrice;
     });
 
     if (sortMode === "cheap") return [...filtered].sort((a, b) => a.price - b.price);
     if (sortMode === "expensive") return [...filtered].sort((a, b) => b.price - a.price);
     if (sortMode === "wattage") return [...filtered].sort((a, b) => b.wattage - a.wattage);
     return filtered;
-  }, [priceRange, selectedBrands, selectedCategories, sortMode]);
+  }, [priceRange, selectedBrands, selectedCategories, selectedPeripheralCategories, sortMode]);
 
   const addToCart = (part: PcPart) => {
     onAddComponentToCart(makeCartItem(part));
@@ -146,7 +167,7 @@ export function ComponentsPage({
         <section className="bg-[#061a3a] px-6 pt-32 text-white">
           <div className="mx-auto max-w-7xl pb-14">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-sky-300">PC components</p>
-            <h1 className="mt-4 text-5xl font-black tracking-tight sm:text-6xl">Комплектуючі</h1>
+            <h1 className="mt-4 text-5xl font-black tracking-tight sm:text-6xl">Комплектуючі та периферія</h1>
             <p className="mt-5 max-w-2xl text-lg font-medium leading-8 text-sky-50/78">
               Обирай окремі деталі для апгрейду або майбутньої збірки: процесори, відеокарти, пам'ять, накопичувачі, блоки живлення, корпуси та охолодження.
             </p>
@@ -190,6 +211,41 @@ export function ComponentsPage({
                           {category.label}
                         </button>
                       ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="py-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterGroup("peripheral")}
+                    className="flex w-full items-center justify-between text-left text-sm font-black text-slate-900"
+                  >
+                    Периферія
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition ${openFilterGroup === "peripheral" ? "rotate-180" : ""}`} />
+                  </button>
+                  {openFilterGroup === "peripheral" ? (
+                    <div className="mt-3 grid gap-2">
+                      {peripheralCategories.map((category) => {
+                        const Icon = category.icon;
+                        const isSelected = selectedPeripheralCategories.has(category.id);
+
+                        return (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => togglePeripheralCategory(category.id)}
+                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${
+                              isSelected
+                                ? "border-sky-300 bg-sky-50 text-sky-700"
+                                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {category.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : null}
                 </div>
@@ -327,6 +383,13 @@ export function ComponentsPage({
                 );
               })}
             </div>
+
+            {visibleParts.length === 0 ? (
+              <div className="mt-4 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                <p className="text-lg font-black text-slate-950">У цій категорії товарів поки немає.</p>
+                <p className="mt-2 text-sm font-medium text-slate-500">Спробуй інший фільтр або повернись сюди трохи згодом.</p>
+              </div>
+            ) : null}
           </div>
         </section>
 
