@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Box, ChevronDown, Cpu, Fan, HardDrive, Keyboard, Layers, Monitor, Mouse, SlidersHorizontal, Speaker, X, Zap } from "lucide-react";
+import { Box, ChevronDown, Cpu, Fan, HardDrive, Layers, Monitor, SlidersHorizontal, X, Zap } from "lucide-react";
 import { Header } from "./Header";
 import { Footer, type AboutSectionId } from "./Footer";
 import { partCategories, pcParts, type PartCategoryId, type PcPart } from "../data/pcBuilderData";
@@ -24,11 +24,11 @@ type SortMode = "popular" | "cheap" | "expensive" | "wattage";
 type FilterGroupId = "category" | "peripheral" | "brand" | "price";
 type PeripheralCategoryId = "monitor" | "mouse" | "keyboard" | "speaker";
 
-const peripheralCategories: Array<{ id: PeripheralCategoryId; label: string; icon: typeof Monitor }> = [
-  { id: "monitor", label: "Монітори", icon: Monitor },
-  { id: "mouse", label: "Мишки", icon: Mouse },
-  { id: "keyboard", label: "Клавіатури", icon: Keyboard },
-  { id: "speaker", label: "Колонки", icon: Speaker },
+const peripheralCategories: Array<{ id: PeripheralCategoryId; label: string }> = [
+  { id: "monitor", label: "Монітори" },
+  { id: "mouse", label: "Мишки" },
+  { id: "keyboard", label: "Клавіатури" },
+  { id: "speaker", label: "Колонки" },
 ];
 
 const categoryIcons: Record<PartCategoryId, typeof Cpu> = {
@@ -227,7 +227,6 @@ export function ComponentsPage({
                   {openFilterGroup === "peripheral" ? (
                     <div className="mt-3 grid gap-2">
                       {peripheralCategories.map((category) => {
-                        const Icon = category.icon;
                         const isSelected = selectedPeripheralCategories.has(category.id);
 
                         return (
@@ -235,13 +234,12 @@ export function ComponentsPage({
                             key={category.id}
                             type="button"
                             onClick={() => togglePeripheralCategory(category.id)}
-                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${
+                            className={`rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${
                               isSelected
                                 ? "border-sky-300 bg-sky-50 text-sky-700"
                                 : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                             }`}
                           >
-                            <Icon className="h-4 w-4" />
                             {category.label}
                           </button>
                         );
