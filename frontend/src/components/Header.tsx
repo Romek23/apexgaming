@@ -20,7 +20,7 @@ const navItems = [
   { label: "Головна", action: "home" },
   { label: "Каталог", action: "catalog" },
   { label: "Збірки", action: "builder" },
-  { label: "Комплектуючі", action: "components" },
+  { label: "Комплектуючі та периферія", action: "components" },
   { label: "Про нас", action: "about" },
 ] as const;
 
