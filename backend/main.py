@@ -13,11 +13,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Дозволяємо фронтенду звертатися до бекенду з локального браузера.
+import os
+
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    os.getenv("FRONTEND_URL", ""),
 ]
+
+origins = [origin for origin in origins if origin]
 
 app.add_middleware(
     CORSMiddleware,
