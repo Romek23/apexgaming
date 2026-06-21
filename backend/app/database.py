@@ -6,8 +6,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-# Беремо рядок підключення до PostgreSQL з файлу .env.
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+)
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not configured")
