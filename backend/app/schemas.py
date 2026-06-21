@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -22,7 +22,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
-    avatar_url: str | None = None
+    avatar_url: Optional[str] = None
 
     class Config:
         # Дозволяє Pydantic читати дані прямо з SQLAlchemy-моделі User.
@@ -38,11 +38,11 @@ class AuthResponse(BaseModel):
 
 # Дані для оновлення аватара профілю.
 class AvatarUpdate(BaseModel):
-    avatar_url: str | None = None
+    avatar_url: Optional[str] = None
 
 
 class SavedBuildCreate(BaseModel):
-    name: str | None = Field(default=None, max_length=120)
+    name: Optional[str] = Field(default=None, max_length=120)
     total_price: int = Field(ge=0)
     estimated_wattage: int = Field(ge=0)
     parts: list[dict[str, Any]]
@@ -58,4 +58,4 @@ class SavedBuildResponse(BaseModel):
     total_price: int
     estimated_wattage: int
     parts: list[dict[str, Any]]
-    created_at: str | None = None
+    created_at: Optional[str] = None

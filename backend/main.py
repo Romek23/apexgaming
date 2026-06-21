@@ -1,11 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
 from app.routes.auth import router as auth_router
 from app.routes.users import router as users_router
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="ApexGaming API",
@@ -40,7 +37,10 @@ async def root():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    # This endpoint intentionally has no database dependency.  It verifies
+    # that the Vercel function can import and start FastAPI independently of
+    # Neon availability.
+    return {"status": "ok", "service": "apexgaming-api"}
 
 if __name__ == "__main__":
     import uvicorn

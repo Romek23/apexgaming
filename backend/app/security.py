@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -29,7 +30,7 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_access_token(token: str) -> dict | None:
+def decode_access_token(token: str) -> Optional[dict]:
     # Розшифровуємо токен. Якщо він неправильний або прострочений, повертаємо None.
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
