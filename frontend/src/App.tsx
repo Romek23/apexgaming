@@ -273,7 +273,20 @@ export default function App() {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(nextCart))
   }
 
+  const requireAuthenticatedUser = () => {
+    if (user) {
+      return true
+    }
+
+    navigateTo('auth')
+    return false
+  }
+
   const handleAddCatalogToCart = (item: CartCatalogItem) => {
+    if (!requireAuthenticatedUser()) {
+      return
+    }
+
     saveCart({
       ...cart,
       catalogItems: [item, ...cart.catalogItems.filter((cartItem) => cartItem.id !== item.id)],
@@ -281,6 +294,10 @@ export default function App() {
   }
 
   const handleAddBuildToCart = (item: CartBuildItem) => {
+    if (!requireAuthenticatedUser()) {
+      return
+    }
+
     saveCart({
       ...cart,
       buildItems: [item, ...cart.buildItems.filter((cartItem) => cartItem.id !== item.id)],
@@ -288,6 +305,10 @@ export default function App() {
   }
 
   const handleAddComponentToCart = (item: CartComponentItem) => {
+    if (!requireAuthenticatedUser()) {
+      return
+    }
+
     saveCart({
       ...cart,
       componentItems: [item, ...(cart.componentItems ?? []).filter((cartItem) => cartItem.id !== item.id)],
